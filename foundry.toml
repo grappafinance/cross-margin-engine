@@ -1,0 +1,19 @@
+[profile.default]
+solc_version = '0.8.17'
+optimizer = true
+optimizer_runs = 100000
+# via_ir = true # temporarily disable for faster snapshot
+
+gas_reports = [
+  # "*",
+  "Pomace",
+  "OptionToken",
+  "CrossMarginEngine",
+  "ChainlinkOracle",
+  "ChainlinkOracleDisputable"
+]
+
+[fmt]
+line_length=130
+tab_width=4
+func_attrs_with_params_multiline=true
