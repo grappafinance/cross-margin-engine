@@ -10,12 +10,10 @@ import {ICrossMarginEngine} from "pomace/interfaces/ICrossMarginEngine.sol";
 import "pomace/libraries/TokenIdUtil.sol";
 import "pomace/libraries/BalanceUtil.sol";
 
-import "pomace/config/types.sol";
-import "pomace/config/constants.sol";
-
 // Cross Margin libraries and configs
 import "./libraries/AccountUtil.sol";
-import "./config/types.sol";
+
+import {CrossMarginAccount} from "./config/types.sol";
 import "./config/errors.sol";
 
 /**

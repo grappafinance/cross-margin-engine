@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // cross margin types
-import "../config/types.sol";
+import {CrossMarginDetail, Position} from "../config/types.sol";
 
 library AccountUtil {
     function append(CrossMarginDetail[] memory x, CrossMarginDetail memory v)
