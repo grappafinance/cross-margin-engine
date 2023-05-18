@@ -23,8 +23,8 @@ import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 
 // Cross margin libraries
 import {AccountUtil} from "./libraries/AccountUtil.sol";
-import {CrossMarginMath} from "./CrossMarginMath.sol";
-import {CrossMarginLib} from "./CrossMarginLib.sol";
+import {CrossMarginPhysicalMath} from "./CrossMarginPhysicalMath.sol";
+import {CrossMarginPhysicalLib} from "./CrossMarginPhysicalLib.sol";
 
 // Cross margin types
 import "./config/types.sol";
@@ -37,14 +37,14 @@ import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
 /**
- * @title   CrossMarginEngine
+ * @title   CrossMarginPhysicalEngine
  * @author  @dsshap, @antoncoding
  * @notice  Fully collateralized margin engine
  *             Users can deposit collateral into Cross Margin and mint optionTokens (debt) out of it.
  *             Interacts with OptionToken to mint / burn
  *             Interacts with pomace to fetch registered asset info
  */
-contract CrossMarginEngine is
+contract CrossMarginPhysicalEngine is
     OptionTransferable,
     IMarginEngine,
     OwnableUpgradeable,
@@ -53,7 +53,7 @@ contract CrossMarginEngine is
 {
     using AccountUtil for Position[];
     using BalanceUtil for Balance[];
-    using CrossMarginLib for CrossMarginAccount;
+    using CrossMarginPhysicalLib for CrossMarginAccount;
     using ProductIdUtil for uint32;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -567,7 +567,7 @@ contract CrossMarginEngine is
      * @dev get minimum collateral requirement for an account
      */
     function _getMinCollateral(CrossMarginAccount memory account) internal view returns (Balance[] memory) {
-        return CrossMarginMath.getMinCollateralForPositions(pomace, account.shorts, account.longs);
+        return CrossMarginPhysicalMath.getMinCollateralForPositions(pomace, account.shorts, account.longs);
     }
 
     /**

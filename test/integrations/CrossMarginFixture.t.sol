@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import "../../src/CrossMarginEngine.sol";
-import "../../src/CrossMarginEngineProxy.sol";
+import "../../src/CrossMarginPhysicalEngine.sol";
+import "../../src/CrossMarginPhysicalEngineProxy.sol";
 import {Pomace} from "pomace/core/Pomace.sol";
 import "pomace/core/PomaceProxy.sol";
 import "pomace/core/OptionToken.sol";
@@ -29,7 +29,7 @@ import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
  * helper contract for full margin integration test to inherit.
  */
 abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
-    CrossMarginEngine internal engine;
+    CrossMarginPhysicalEngine internal engine;
     Pomace internal pomace;
     OptionToken internal option;
 
@@ -77,12 +77,12 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 6
         vm.label(address(pomace), "Pomace");
 
-        address engineImplementation = address(new CrossMarginEngine(address(pomace), address(option))); // nonce 7
+        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option))); // nonce 7
 
-        bytes memory engineData = abi.encode(CrossMarginEngine.initialize.selector);
+        bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
 
-        engine = CrossMarginEngine(address(new CrossMarginEngineProxy(engineImplementation, engineData))); // 8
-        vm.label(address(engine), "CrossMarginEngine");
+        engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData))); // 8
+        vm.label(address(engine), "CrossMarginPhysicalEngine");
 
         whitelist = new MockWhitelist();
         vm.label(address(whitelist), "Whitelist");

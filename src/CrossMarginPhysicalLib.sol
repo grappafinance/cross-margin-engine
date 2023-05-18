@@ -17,10 +17,10 @@ import {CrossMarginAccount} from "./config/types.sol";
 import "./config/errors.sol";
 
 /**
- * @title CrossMarginLib
+ * @title CrossMarginPhysicalLib
  * @dev   This library is in charge of updating the simple account struct and do validations
  */
-library CrossMarginLib {
+library CrossMarginPhysicalLib {
     using BalanceUtil for Balance[];
     using AccountUtil for Position[];
     using UintArrayLib for uint256[];

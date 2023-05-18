@@ -28,11 +28,11 @@ import "pomace/config/enums.sol";
 import "pomace/config/errors.sol";
 
 /**
- * @title   CrossMarginMath
+ * @title   CrossMarginPhysicalMath
  * @notice  this library is in charge of calculating the min collateral for a given cross margin account
  * @dev     deployed as a separate contract to save space
  */
-library CrossMarginMath {
+library CrossMarginPhysicalMath {
     using BalanceUtil for Balance[];
     using AccountUtil for CrossMarginDetail[];
     using AccountUtil for Position[];

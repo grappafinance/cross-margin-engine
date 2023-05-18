@@ -12,8 +12,8 @@ import "pomace/core/OptionToken.sol";
 import "pomace/core/OptionTokenDescriptor.sol";
 import "pomace/core/Pomace.sol";
 import "pomace/core/PomaceProxy.sol";
-import "../src/CrossMarginEngine.sol";
-import "../src/CrossMarginEngineProxy.sol";
+import "../src/CrossMarginPhysicalEngine.sol";
+import "../src/CrossMarginPhysicalEngineProxy.sol";
 
 import "../test/utils/Utilities.sol";
 
@@ -30,9 +30,9 @@ contract Deploy is Script, Utilities {
 
     function deployCrossMarginEngine(Pomace pomace, address optionToken) public returns (address crossMarginEngine) {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginEngine(address(pomace), optionToken));
-        bytes memory engineData = abi.encode(CrossMarginEngine.initialize.selector);
-        crossMarginEngine = address(new CrossMarginEngineProxy(engineImplementation, engineData));
+        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), optionToken));
+        bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
+        crossMarginEngine = address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData));
 
         console.log("CrossMargin Engine: \t\t", crossMarginEngine);
 

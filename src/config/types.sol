@@ -28,7 +28,6 @@ struct CrossMarginAccount {
  * @param underlyingDecimals    decimal points of underlying asset
  * @param numeraireId           pomace id for numeraire (aka strike) asset
  * @param numeraireDecimals     decimal points of numeraire (aka strike) asset
- * @param spotPrice             current spot price of underlying in terms of strike asset
  * @param expiry                expiry of the option
  */
 struct CrossMarginDetail {
