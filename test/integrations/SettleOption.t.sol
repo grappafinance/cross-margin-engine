@@ -16,7 +16,7 @@ import "../../src/config/types.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleOption_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint256 private tokenId;
@@ -28,13 +28,13 @@ contract TestSettleOption_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(4000 * UNIT);
     }
 
-    function testGetsNothingFromOptionPastSettlementWindow() public {
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+    function testGetsNothingFromOptionPastExerciseWindow() public {
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         vm.warp(expiry + 299);
 
@@ -57,7 +57,7 @@ contract TestSettleOption_CM is CrossMarginFixture {
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleCoveredCall_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint256 private tokenId;
@@ -69,11 +69,11 @@ contract TestSettleCoveredCall_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(4000 * UNIT);
 
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
         // give option to alice
@@ -152,7 +152,7 @@ contract TestSettleCoveredCall_CM is CrossMarginFixture {
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleCollateralizedPut_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint256 private tokenId;
@@ -164,11 +164,11 @@ contract TestSettleCollateralizedPut_CM is CrossMarginFixture {
         usdc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(2000 * UNIT);
 
-        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
         // give option to alice
@@ -247,7 +247,7 @@ contract TestSettleCollateralizedPut_CM is CrossMarginFixture {
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleShortPositions_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint64 private strike;
@@ -262,13 +262,13 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
         usdc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(4000 * UNIT);
     }
 
     function testSellerCannotClearCallDebtAfterExpiryBeforeWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
@@ -287,11 +287,11 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
     }
 
     function testSellerCanClearCallDebtAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         (,, Balance[] memory collateralsBefore) = engine.marginAccounts(address(this));
 
@@ -309,7 +309,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
     }
 
     function testSellerCanClearPartialCallDebtAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
@@ -322,7 +322,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
         pomace.settleOption(alice, tokenId, amount / 2);
         vm.stopPrank();
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         (,, Balance[] memory collateralsBefore) = engine.marginAccounts(address(this));
 
@@ -340,7 +340,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
     }
 
     function testSellerCannotClearPutDebtAfterExpiryBeforeWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
@@ -359,11 +359,11 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
     }
 
     function testSellerCanClearPutDebtAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         (,, Balance[] memory collateralsBefore) = engine.marginAccounts(address(this));
 
@@ -381,7 +381,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
     }
 
     function testSellerCanClearPartialPutDebtAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
@@ -394,7 +394,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
         pomace.settleOption(alice, tokenId, amount / 2);
         vm.stopPrank();
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         (,, Balance[] memory collateralsBefore) = engine.marginAccounts(address(this));
 
@@ -428,7 +428,7 @@ contract TestSettleShortPositions_CM is CrossMarginFixture {
 // solhint-disable-next-line contract-name-camelcase
 contract TestExerciseLongPositions_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint64 private strike;
@@ -450,13 +450,13 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
         vm.stopPrank();
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(4000 * UNIT);
     }
 
     function testCannotClearLongWithExceededAmount() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
@@ -469,11 +469,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearLongPortion() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
-        vm.warp(expiry + settlementWindow);
+        vm.warp(expiry + exerciseWindow);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](2);
@@ -492,7 +492,7 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
         assertEq(collaterals[0].collateralId, wethId);
         assertEq(collaterals[0].amount, wethDepositAmount / 2);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createExerciseTokenAction(0, 0);
@@ -507,11 +507,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCannotClearLongCallAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](1);
@@ -526,11 +526,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearLongCallAfterExpiryBeforeWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, wethId, wethDepositAmount);
 
-        vm.warp(expiry + settlementWindow);
+        vm.warp(expiry + exerciseWindow);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](2);
@@ -548,8 +548,8 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearMultipleLongCallAfterExpiryBeforeWindowClosed() public {
-        uint256 tokenId1 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow + 1 hours);
-        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry + 1 hours, strike, settlementWindow);
+        uint256 tokenId1 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, exerciseWindow + 1 hours);
+        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry + 1 hours, strike, exerciseWindow);
 
         _mintTokens(tokenId1, wethId, wethDepositAmount);
         _mintTokens(tokenId2, wethId, wethDepositAmount);
@@ -573,11 +573,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCannotClearLongPutAfterWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](1);
@@ -592,11 +592,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearPutBeforeWindowClosed() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
-        vm.warp(expiry + settlementWindow);
+        vm.warp(expiry + exerciseWindow);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](2);
@@ -614,11 +614,11 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearPortionPut() public {
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
 
         _mintTokens(tokenId, usdcId, usdcDepositAmount);
 
-        vm.warp(expiry + settlementWindow);
+        vm.warp(expiry + exerciseWindow);
 
         // settle margin account
         ActionArgs[] memory actions = new ActionArgs[](2);
@@ -654,7 +654,7 @@ contract TestExerciseLongPositions_CM is CrossMarginFixture {
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleSocializedLosses_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     uint64 private amount = uint64(1 * UNIT);
     uint256 private tokenId;
@@ -677,11 +677,11 @@ contract TestSettleSocializedLosses_CM is CrossMarginFixture {
         usdc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         strike = uint64(4000 * UNIT);
 
-        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
+        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
     }
 
     function testSocializeLoss() public {
@@ -701,7 +701,7 @@ contract TestSettleSocializedLosses_CM is CrossMarginFixture {
         vm.prank(bob);
         pomace.settleOption(bob, tokenId, amount);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createSettleAction();

@@ -153,11 +153,11 @@ library CrossMarginPhysicalLib {
 
         for (i; i < account.longs.length;) {
             if (tokenId == account.longs[i].tokenId) {
-                (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
+                (,, uint64 expiry,, uint64 exerciseWindow) = tokenId.parseTokenId();
 
                 if (expiry > block.timestamp) revert CML_NotExpired();
 
-                if (expiry + settlementWindow < block.timestamp) {
+                if (expiry + exerciseWindow < block.timestamp) {
                     // worthless option, removing from account
                     account.longs.removeAt(i);
                 } else {
@@ -193,9 +193,9 @@ library CrossMarginPhysicalLib {
 
         // clean up worthless tokens
         for (i = 0; i < account.longs.length;) {
-            (,, uint64 expiry,, uint64 settlementWindow) = account.longs[i].tokenId.parseTokenId();
+            (,, uint64 expiry,, uint64 exerciseWindow) = account.longs[i].tokenId.parseTokenId();
 
-            if (expiry + settlementWindow < block.timestamp) {
+            if (expiry + exerciseWindow < block.timestamp) {
                 account.longs.removeAt(i);
             } else {
                 unchecked {
@@ -218,10 +218,10 @@ library CrossMarginPhysicalLib {
         for (i; i < account.shorts.length;) {
             uint256 tokenId = account.shorts[i].tokenId;
 
-            (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
+            (,, uint64 expiry,, uint64 exerciseWindow) = tokenId.parseTokenId();
 
             // can only settle short options after the settlement window
-            if (expiry + settlementWindow < block.timestamp) {
+            if (expiry + exerciseWindow < block.timestamp) {
                 tokenIds = tokenIds.append(tokenId);
                 amounts = amounts.append(account.shorts[i].amount);
                 account.shorts.removeAt(i);

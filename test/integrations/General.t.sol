@@ -61,10 +61,10 @@ contract CrossEngineGenernal is CrossMarginFixture {
         uint256 depositAmount = 5000 * 1e6;
 
         uint256 strikePrice = 3000 * UNIT;
-        uint256 settlementWindow = 300;
+        uint256 exerciseWindow = 300;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);

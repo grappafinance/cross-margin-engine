@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestPMRemoveCollateral_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
@@ -30,7 +30,7 @@ contract TestPMRemoveCollateral_CM is CrossMarginFixture {
         vm.stopPrank();
 
         expiry = block.timestamp + 1 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
     }
 
     function testEqualShortLongAllowCollateralWithdraw() public {
@@ -39,7 +39,7 @@ contract TestPMRemoveCollateral_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);
@@ -88,8 +88,8 @@ contract TestPMRemoveCollateral_CM is CrossMarginFixture {
 
         uint256 strikeSpread = 1 * UNIT;
 
-        uint256 shortId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice - strikeSpread, settlementWindow);
-        uint256 longId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 shortId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice - strikeSpread, exerciseWindow);
+        uint256 longId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);
@@ -143,8 +143,8 @@ contract TestPMRemoveCollateral_CM is CrossMarginFixture {
 
         uint256 strikeSpread = 1;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice - strikeSpread, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, exerciseWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice - strikeSpread, exerciseWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);

@@ -25,7 +25,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
     uint32 internal pidSdycCollat;
 
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     function setUp() public {
         weth.mint(address(this), 1000 * 1e18);
@@ -59,7 +59,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         sdyc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
         oracle.setSpotPrice(address(weth), 3000 * UNIT);
         oracle.setSpotPrice(address(lsEth), 3000 * UNIT);
@@ -72,7 +72,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 1 * 1e18;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
@@ -94,7 +94,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 lsEthAfter = lsEth.balanceOf(alice);
         assertEq(lsEthAfter, lsEthBefore + expectedPayout);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createSettleAction();
@@ -113,7 +113,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 2000 * 1e6;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);
@@ -136,7 +136,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 sdycAfter = sdyc.balanceOf(alice);
         assertEq(sdycAfter, sdycBefore + expectedPayout);
 
-        vm.warp(expiry + settlementWindow + 1);
+        vm.warp(expiry + exerciseWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createSettleAction();

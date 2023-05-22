@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestTransfer_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
     uint256 public c4000;
     uint256 public c5000;
     uint256 public depositAmount = 1 * 1e18;
@@ -35,11 +35,11 @@ contract TestTransfer_CM is CrossMarginFixture {
         vm.stopPrank();
 
         expiry = block.timestamp + 1 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
-        c4000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 4000 * UNIT, settlementWindow);
+        c4000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 4000 * UNIT, exerciseWindow);
 
-        c5000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 5000 * UNIT, settlementWindow);
+        c5000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 5000 * UNIT, exerciseWindow);
 
         ActionArgs[] memory aliceActions = new ActionArgs[](2);
         aliceActions[0] = createAddCollateralAction(wethId, alice, depositAmount);

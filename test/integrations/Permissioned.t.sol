@@ -13,7 +13,7 @@ import "pomace/test/mocks/MockERC20.sol";
 
 contract Permissioned is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
     uint256 public tokenId;
     uint256 public amount;
     uint256 public depositAmount;
@@ -34,9 +34,9 @@ contract Permissioned is CrossMarginFixture {
         amount = 1 * UNIT;
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
 
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
     }
 
     function testCannotExecute() public {

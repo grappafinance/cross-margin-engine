@@ -16,7 +16,7 @@ import "pomace/test/mocks/MockERC20.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestMintIntoAccount_CM is CrossMarginFixture {
     uint256 public expiry;
-    uint256 public settlementWindow;
+    uint256 public exerciseWindow;
 
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
@@ -26,7 +26,7 @@ contract TestMintIntoAccount_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-        settlementWindow = 300;
+        exerciseWindow = 300;
     }
 
     function testMintIntoAccountCall() public {
@@ -35,7 +35,7 @@ contract TestMintIntoAccount_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);

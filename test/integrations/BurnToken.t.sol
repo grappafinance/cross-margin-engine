@@ -17,7 +17,7 @@ import "../../src/config/types.sol";
 contract TestBurnOption_CM is CrossMarginFixture {
     uint256 public expiry;
     uint256 public strikePrice = 4000 * UNIT;
-    uint256 public settlementWindow = 300;
+    uint256 public exerciseWindow = 300;
     uint256 public depositAmount = 1 ether;
     uint256 public amount = 1 * UNIT;
     uint256 public tokenId;
@@ -29,7 +29,7 @@ contract TestBurnOption_CM is CrossMarginFixture {
         expiry = block.timestamp + 14 days;
 
         // mint a 3000 strike call first
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
@@ -56,7 +56,7 @@ contract TestBurnOption_CM is CrossMarginFixture {
         address subAccount = address(uint160(address(this)) - 1);
 
         // badId: usdc Id
-        uint256 badTokenId = getTokenId(TokenType.CALL, pidUsdcCollat, expiry, strikePrice, settlementWindow);
+        uint256 badTokenId = getTokenId(TokenType.CALL, pidUsdcCollat, expiry, strikePrice, exerciseWindow);
         // build burn account
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createBurnAction(badTokenId, address(this), amount);

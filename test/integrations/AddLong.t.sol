@@ -29,11 +29,11 @@ contract TestAddLong_CM is CrossMarginFixture {
         uint256 depositAmount = 1 * 1e18;
 
         uint256 strikePrice = 4000 * UNIT;
-        uint256 settlementWindow = 300;
+        uint256 exerciseWindow = 300;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
-        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 2 * strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
+        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 2 * strikePrice, exerciseWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](4);
@@ -59,11 +59,11 @@ contract TestAddLong_CM is CrossMarginFixture {
         uint256 depositAmount = 4000 * 1e6;
 
         uint256 strikePrice = 4000 * UNIT;
-        uint256 settlementWindow = 300;
+        uint256 exerciseWindow = 300;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 2 * strikePrice, settlementWindow);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, exerciseWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 2 * strikePrice, exerciseWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](4);
