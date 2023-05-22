@@ -4,3 +4,4 @@ openzeppelin/=lib/openzeppelin-contracts/contracts/
 openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 array-lib=lib/array-lib/src
 pomace=lib/core-physical/src/
+grappa=lib/core-cash/src/

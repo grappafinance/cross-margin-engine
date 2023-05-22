@@ -16,11 +16,11 @@ import {BalanceUtil} from "pomace/libraries/BalanceUtil.sol";
 import {BytesArrayUtil} from "pomace/libraries/BytesArrayUtil.sol";
 
 // cross margin libraries
-import {AccountUtil} from "./libraries/AccountUtil.sol";
+import {AccountUtil} from "../libraries/AccountUtil.sol";
 
 // Cross margin types
-import "./config/types.sol";
-import "./config/errors.sol";
+import "./types.sol";
+import "../config/errors.sol";
 
 import {ProductDetails} from "pomace/config/types.sol";
 import "pomace/config/constants.sol";

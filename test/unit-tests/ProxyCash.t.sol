@@ -4,27 +4,27 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import "forge-std/Test.sol";
 
-import "../../src/CrossMarginPhysicalEngine.sol";
-import "../../src/CrossMarginPhysicalEngineProxy.sol";
+import "../../src/settled-cash/CrossMarginCashEngine.sol";
+import "../../src/settled-cash/CrossMarginCashEngineProxy.sol";
 
 import {MockEngineV2} from "../mocks/MockEngineV2.sol";
 
-import "../../src/config/errors.sol";
-import "pomace/config/enums.sol";
-import "pomace/config/constants.sol";
+import "grappa/config/enums.sol";
+import "grappa/config/constants.sol";
+import "grappa/config/errors.sol";
 
 /**
  * @dev test on implementation contract
  */
-contract EngineProxyTest is Test {
-    CrossMarginPhysicalEngine public implementation;
-    CrossMarginPhysicalEngine public engine;
+contract CashEngineProxyTest is Test {
+    CrossMarginCashEngine public implementation;
+    CrossMarginCashEngine public engine;
 
     constructor() {
-        implementation = new CrossMarginPhysicalEngine(address(0), address(0));
-        bytes memory data = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
+        implementation = new CrossMarginCashEngine(address(0), address(0));
+        bytes memory data = abi.encode(CrossMarginCashEngine.initialize.selector);
 
-        engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(address(implementation), data)));
+        engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(address(implementation), data)));
     }
 
     function testImplementationContractOwnerIsZero() public {

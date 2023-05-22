@@ -22,13 +22,13 @@ import {TokenIdUtil} from "pomace/libraries/TokenIdUtil.sol";
 import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 
 // Cross margin libraries
-import {AccountUtil} from "./libraries/AccountUtil.sol";
+import {AccountUtil} from "../libraries/AccountUtil.sol";
 import {CrossMarginPhysicalMath} from "./CrossMarginPhysicalMath.sol";
 import {CrossMarginPhysicalLib} from "./CrossMarginPhysicalLib.sol";
 
 // Cross margin types
-import "./config/types.sol";
-import "./config/errors.sol";
+import "./types.sol";
+import "../config/errors.sol";
 
 // global constants and types
 import {BatchExecute, ActionArgs} from "pomace/config/types.sol";

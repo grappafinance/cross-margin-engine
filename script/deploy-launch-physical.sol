@@ -12,8 +12,8 @@ import "pomace/core/OptionToken.sol";
 import "pomace/core/OptionTokenDescriptor.sol";
 import "pomace/core/Pomace.sol";
 import "pomace/core/PomaceProxy.sol";
-import "../src/CrossMarginPhysicalEngine.sol";
-import "../src/CrossMarginPhysicalEngineProxy.sol";
+import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
+import "../src/settled-physical/CrossMarginPhysicalEngineProxy.sol";
 
 import "../test/utils/Utilities.sol";
 

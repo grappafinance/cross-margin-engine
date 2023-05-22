@@ -3,10 +3,12 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {CrossMarginPhysicalMath} from "../../src/CrossMarginPhysicalMath.sol";
-import "pomace/config/constants.sol";
-import "../../src/config/errors.sol";
+import {CrossMarginCashMath} from "../../src/settled-cash/CrossMarginCashMath.sol";
+import "grappa/config/enums.sol";
+import "grappa/config/constants.sol";
+import "grappa/config/errors.sol";
 
+import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 /**
@@ -14,7 +16,7 @@ import "../../src/config/types.sol";
  */
 // solhint-disable-next-line contract-name-camelcase
 contract TestStructures_CMM is Test {
-    using CrossMarginPhysicalMath for CrossMarginDetail;
+    using CrossMarginCashMath for CrossMarginDetail;
 
     int256[] private putWeights;
     uint256[] private putStrikes;
@@ -217,7 +219,34 @@ contract TestStructures_CMM is Test {
         assertEq(underlyingNeeded, 0);
     }
 
-    function testMarginSimplePut() public {
+    function testMarginSimpleITMPut() public {
+        putWeights = new int256[](1);
+        putWeights[0] = -1 * sUNIT;
+
+        putStrikes = new uint256[](1);
+        putStrikes[0] = 22000 * UNIT;
+
+        callWeights = new int256[](0);
+        callStrikes = new uint256[](0);
+
+        CrossMarginDetail memory detail = CrossMarginDetail({
+            putWeights: putWeights,
+            putStrikes: putStrikes,
+            callWeights: callWeights,
+            callStrikes: callStrikes,
+            underlyingId: 0,
+            underlyingDecimals: UNIT_DECIMALS,
+            numeraireId: 1,
+            numeraireDecimals: UNIT_DECIMALS,
+            expiry: 0
+        });
+
+        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
+        assertEq(numeraireNeeded, putStrikes[0]);
+        assertEq(underlyingNeeded, 0);
+    }
+
+    function testMarginSimpleOTMPut() public {
         putWeights = new int256[](1);
         putWeights[0] = -1 * sUNIT;
 
@@ -244,7 +273,34 @@ contract TestStructures_CMM is Test {
         assertEq(underlyingNeeded, 0);
     }
 
-    function testMarginSimpleCall() public {
+    function testMarginSimpleITMCall() public {
+        putWeights = new int256[](0);
+        putStrikes = new uint256[](0);
+
+        callWeights = new int256[](1);
+        callWeights[0] = -1 * sUNIT;
+
+        callStrikes = new uint256[](1);
+        callStrikes[0] = 15000 * UNIT;
+
+        CrossMarginDetail memory detail = CrossMarginDetail({
+            putWeights: putWeights,
+            putStrikes: putStrikes,
+            callWeights: callWeights,
+            callStrikes: callStrikes,
+            underlyingId: 0,
+            underlyingDecimals: UNIT_DECIMALS,
+            numeraireId: 1,
+            numeraireDecimals: UNIT_DECIMALS,
+            expiry: 0
+        });
+
+        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
+        assertEq(numeraireNeeded, 0);
+        assertEq(underlyingNeeded, 1 * UNIT);
+    }
+
+    function testMarginSimpleOTMCall() public {
         putWeights = new int256[](0);
         putStrikes = new uint256[](0);
 
@@ -525,7 +581,7 @@ contract TestStructures_CMM is Test {
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestVanillaCall_CMM is Test {
-    using CrossMarginPhysicalMath for CrossMarginDetail;
+    using CrossMarginCashMath for CrossMarginDetail;
 
     int256[] private putWeights;
     uint256[] private putStrikes;
@@ -565,7 +621,7 @@ contract TestVanillaCall_CMM is Test {
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestVanillaPut_CMM is Test {
-    using CrossMarginPhysicalMath for CrossMarginDetail;
+    using CrossMarginCashMath for CrossMarginDetail;
 
     int256[] private putWeights;
     uint256[] private putStrikes;
@@ -604,7 +660,7 @@ contract TestVanillaPut_CMM is Test {
 }
 
 contract TestStrangles is Test {
-    using CrossMarginPhysicalMath for CrossMarginDetail;
+    using CrossMarginCashMath for CrossMarginDetail;
 
     int256[] private putWeights;
     uint256[] private putStrikes;
@@ -701,7 +757,7 @@ contract TestStrangles is Test {
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestCornerCases_CMM is Test {
-    using CrossMarginPhysicalMath for CrossMarginDetail;
+    using CrossMarginCashMath for CrossMarginDetail;
 
     int256[] private putWeights;
     uint256[] private putStrikes;

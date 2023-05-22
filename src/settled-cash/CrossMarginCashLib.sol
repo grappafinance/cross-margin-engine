@@ -1,26 +1,24 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IPomace} from "pomace/interfaces/IPomace.sol";
+import {IGrappa} from "grappa/interfaces/IGrappa.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 
-import {ICrossMarginEngine} from "pomace/interfaces/ICrossMarginEngine.sol";
+import "grappa/libraries/TokenIdUtil.sol";
+import "grappa/libraries/BalanceUtil.sol";
 
-import "pomace/libraries/TokenIdUtil.sol";
-import "pomace/libraries/BalanceUtil.sol";
+import "../libraries/AccountUtil.sol";
 
 // Cross Margin libraries and configs
-import "./libraries/AccountUtil.sol";
-
-import {CrossMarginAccount} from "./config/types.sol";
-import "./config/errors.sol";
+import {CrossMarginAccount} from "./types.sol";
+import "../config/errors.sol";
 
 /**
- * @title CrossMarginPhysicalLib
+ * @title CrossMarginCashLib
  * @dev   This library is in charge of updating the simple account struct and do validations
  */
-library CrossMarginPhysicalLib {
+library CrossMarginCashLib {
     using BalanceUtil for Balance[];
     using AccountUtil for Position[];
     using UintArrayLib for uint256[];
@@ -127,75 +125,33 @@ library CrossMarginPhysicalLib {
         }
     }
 
-    // ///@dev Settles the accounts longs and shorts
-    // ///@param account CrossMarginAccount storage that will be updated in-place
-    // function settleAtExpiry(CrossMarginAccount storage account, IPomace pomace)
-    //     external
-    //     returns (Balance[] memory longPayouts, Balance[] memory shortPayouts)
-    // {
-    //     // settling longs first as they can only increase collateral
-    //     _settleLongs(pomace, account);
-    //     // settling shorts last as they can only reduce collateral
-    //     _settleShorts(pomace, account);
-    // }
-
-    ///@dev Exercising long, adding and removing collateral to balances
-    ///@param account CrossMarginAccount memory that will be updated in-place
-    ///@param pomace interface to settle long options in a batch call
-    ///@param tokenId Option to exercise
-    ///@param amount amount of options
-    function exerciseToken(CrossMarginAccount storage account, IPomace pomace, uint256 tokenId, uint256 amount)
+    ///@dev Settles the accounts longs and shorts
+    ///@param account CrossMarginAccount storage that will be updated in-place
+    function settleAtExpiry(CrossMarginAccount storage account, IGrappa grappa)
         external
-        returns (Balance memory debt, Balance memory payout)
+        returns (Balance[] memory longPayouts, Balance[] memory shortPayouts)
     {
+        // settling longs first as they can only increase collateral
+        longPayouts = _settleLongs(grappa, account);
+        // settling shorts last as they can only reduce collateral
+        shortPayouts = _settleShorts(grappa, account);
+    }
+
+    ///@dev Settles the accounts longs, adding collateral to balances
+    ///@param grappa interface to settle long options in a batch call
+    ///@param account CrossMarginAccount memory that will be updated in-place
+    function _settleLongs(IGrappa grappa, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
         uint256 i;
-        bool tokenFound;
+        uint256[] memory tokenIds;
+        uint256[] memory amounts;
 
-        for (i; i < account.longs.length;) {
-            if (tokenId == account.longs[i].tokenId) {
-                (,, uint64 expiry,, uint64 exerciseWindow) = tokenId.parseTokenId();
+        while (i < account.longs.length) {
+            uint256 tokenId = account.longs[i].tokenId;
 
-                if (expiry > block.timestamp) revert CML_NotExpired();
+            if (tokenId.isExpired()) {
+                tokenIds = tokenIds.append(tokenId);
+                amounts = amounts.append(account.longs[i].amount);
 
-                if (expiry + exerciseWindow < block.timestamp) {
-                    // worthless option, removing from account
-                    account.longs.removeAt(i);
-                } else {
-                    uint256 accountAmount = account.longs[i].amount;
-                    if (amount > accountAmount) revert CML_ExceedsAmount();
-
-                    if (amount == accountAmount) {
-                        account.longs.removeAt(i);
-                    } else {
-                        account.longs[i].amount -= uint64(amount);
-                    }
-                }
-
-                tokenFound = true;
-
-                break;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        if (tokenFound) {
-            (debt, payout) = pomace.settleOption(address(this), tokenId, amount);
-
-            // add the collateral in the account storage.
-            if (payout.amount > 0) addCollateral(account, payout.collateralId, payout.amount);
-
-            // remove the collateral in the account storage.
-            if (debt.amount > 0) removeCollateral(account, debt.collateralId, debt.amount);
-        }
-
-        // clean up worthless tokens
-        for (i = 0; i < account.longs.length;) {
-            (,, uint64 expiry,, uint64 exerciseWindow) = account.longs[i].tokenId.parseTokenId();
-
-            if (expiry + exerciseWindow < block.timestamp) {
                 account.longs.removeAt(i);
             } else {
                 unchecked {
@@ -203,27 +159,36 @@ library CrossMarginPhysicalLib {
                 }
             }
         }
+
+        if (tokenIds.length > 0) {
+            payouts = grappa.batchSettleOptions(address(this), tokenIds, amounts);
+
+            for (i = 0; i < payouts.length;) {
+                // add the collateral in the account storage.
+                addCollateral(account, payouts[i].collateralId, payouts[i].amount);
+
+                unchecked {
+                    ++i;
+                }
+            }
+        }
     }
 
-    ///@dev Settles the accounts shorts, updating collateral for exercised options
+    ///@dev Settles the accounts shorts, reserving collateral for ITM options
+    ///@param grappa interface to get short option payouts in a batch call
     ///@param account CrossMarginAccount memory that will be updated in-place
-    function settleShorts(CrossMarginAccount storage account)
-        external
-        returns (Balance[] memory debts, Balance[] memory payouts)
-    {
+    function _settleShorts(IGrappa grappa, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
         uint256 i;
         uint256[] memory tokenIds;
         uint256[] memory amounts;
 
-        for (i; i < account.shorts.length;) {
+        while (i < account.shorts.length) {
             uint256 tokenId = account.shorts[i].tokenId;
 
-            (,, uint64 expiry,, uint64 exerciseWindow) = tokenId.parseTokenId();
-
-            // can only settle short options after the settlement window
-            if (expiry + exerciseWindow < block.timestamp) {
+            if (tokenId.isExpired()) {
                 tokenIds = tokenIds.append(tokenId);
                 amounts = amounts.append(account.shorts[i].amount);
+
                 account.shorts.removeAt(i);
             } else {
                 unchecked {
@@ -232,19 +197,12 @@ library CrossMarginPhysicalLib {
             }
         }
 
-        ICrossMarginEngine engine = ICrossMarginEngine(address(this));
-
         if (tokenIds.length > 0) {
-            // the engine will socialized the debt and payout for settled options
-            (debts, payouts) = engine.getBatchSettlementForShorts(tokenIds, amounts);
+            payouts = grappa.batchGetPayouts(tokenIds, amounts);
 
-            // debts and payouts are equal length
             for (i = 0; i < payouts.length;) {
-                // add to what is paid from exerciser
-                if (debts[i].amount > 0) addCollateral(account, debts[i].collateralId, debts[i].amount);
-
                 // remove the collateral in the account storage.
-                if (payouts[i].amount > 0) removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
+                removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
 
                 unchecked {
                     ++i;

@@ -3,25 +3,26 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import "../../src/CrossMarginPhysicalEngine.sol";
-import "../../src/CrossMarginPhysicalEngineProxy.sol";
-import {Pomace} from "pomace/core/Pomace.sol";
-import "pomace/core/PomaceProxy.sol";
-import "pomace/core/OptionToken.sol";
+import "../../src/settled-cash/CrossMarginCashEngine.sol";
+import "../../src/settled-cash/CrossMarginCashEngineProxy.sol";
+import {Grappa} from "grappa/core/Grappa.sol";
+import "grappa/core/GrappaProxy.sol";
+import "grappa/core/OptionToken.sol";
 
 // Mocks
 import "../mocks/MockERC20.sol";
-import {MockWhitelist} from "../mocks/MockWhitelist.sol";
-import "pomace/test/mocks/MockOracle.sol";
+import "../mocks/MockWhitelist.sol";
+import "grappa/test/mocks/MockOracle.sol";
 
-import {ActionArgs} from "pomace/config/types.sol";
-import "pomace/config/enums.sol";
+// Types
+import "grappa/config/types.sol";
+import "grappa/config/enums.sol";
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 
 import "../utils/Utilities.sol";
 
-import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
+import {ActionHelper} from "grappa/test/shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 
@@ -29,8 +30,8 @@ import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
  * helper contract for full margin integration test to inherit.
  */
 abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
-    CrossMarginPhysicalEngine internal engine;
-    Pomace internal pomace;
+    CrossMarginCashEngine internal engine;
+    Grappa internal grappa;
     OptionToken internal option;
 
     MockERC20 internal usdc;
@@ -45,15 +46,16 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
     address internal bob;
 
     // usdc collateralized call / put
-    uint32 internal pidUsdcCollat;
+    uint40 internal pidUsdcCollat;
 
     // eth collateralized call / put
-    uint32 internal pidEthCollat;
+    uint40 internal pidEthCollat;
 
     uint8 internal usdcId;
     uint8 internal wethId;
 
     uint8 internal engineId;
+    uint8 internal oracleId;
 
     constructor() {
         usdc = new MockERC20("USDC", "USDC", 6); // nonce: 1
@@ -65,36 +67,34 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         oracle = new MockOracle(); // nonce: 3
 
         // predict address of margin account and use it here
-        address pomaceAddr = predictAddress(address(this), 6);
+        address grappaAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(pomaceAddr, address(0)); // nonce: 4
-        vm.label(address(option), "OptionToken");
+        option = new OptionToken(grappaAddr, address(0)); // nonce: 4
 
-        address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
+        address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
 
-        bytes memory pomaceData = abi.encode(Pomace.initialize.selector);
+        bytes memory grappaData = abi.encode(Grappa.initialize.selector);
 
-        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 6
-        vm.label(address(pomace), "Pomace");
+        grappa = Grappa(address(new GrappaProxy(grappaImplementation, grappaData))); // 6
 
-        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option))); // nonce 7
+        address engineImplementation = address(new CrossMarginCashEngine(address(grappa), address(option))); // nonce 7
 
-        bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
+        bytes memory engineData = abi.encode(CrossMarginCashEngine.initialize.selector);
 
-        engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData))); // 8
-        vm.label(address(engine), "CrossMarginPhysicalEngine");
+        engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(engineImplementation, engineData))); // 8
 
         whitelist = new MockWhitelist();
-        vm.label(address(whitelist), "Whitelist");
 
         // register products
-        usdcId = pomace.registerAsset(address(usdc));
-        wethId = pomace.registerAsset(address(weth));
+        usdcId = grappa.registerAsset(address(usdc));
+        wethId = grappa.registerAsset(address(weth));
 
-        engineId = pomace.registerEngine(address(engine));
+        engineId = grappa.registerEngine(address(engine));
 
-        pidUsdcCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(usdc));
-        pidEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(weth));
+        oracleId = grappa.registerOracle(address(oracle));
+
+        pidUsdcCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(usdc));
+        pidEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(weth));
 
         charlie = address(0xcccc);
         vm.label(charlie, "Charlie");
@@ -117,7 +117,7 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         return this.onERC1155Received.selector;
     }
 
-    function mintOptionFor(address _recipient, uint256 _tokenId, uint32 _productId, uint256 _amount) internal {
+    function mintOptionFor(address _recipient, uint256 _tokenId, uint40 _productId, uint256 _amount) internal {
         address anon = address(0x42424242);
 
         vm.startPrank(anon);
