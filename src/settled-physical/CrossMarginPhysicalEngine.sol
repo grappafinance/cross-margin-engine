@@ -5,11 +5,11 @@ pragma solidity ^0.8.0;
 import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // inheriting contracts
 import {OptionTransferable} from "pomace/core/engines/mixins/OptionTransferable.sol";
 import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
-import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // interfaces
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
@@ -75,7 +75,7 @@ contract CrossMarginPhysicalEngine is
     IWhitelist public whitelist;
 
     /*///////////////////////////////////////////////////////////////
-                         State Variables V2
+                         State Variables V1
     //////////////////////////////////////////////////////////////*/
 
     ///@dev A bitmap of asset that are marginable
