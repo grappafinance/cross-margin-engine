@@ -14,6 +14,7 @@ import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
 // interfaces
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
 import {IWhitelist} from "pomace/interfaces/IWhitelist.sol";
+import {IOracle} from "pomace/interfaces/IOracle.sol";
 
 // libraries
 import {BalanceUtil} from "pomace/libraries/BalanceUtil.sol";
@@ -78,18 +79,8 @@ contract CrossMarginPhysicalEngine is
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
 
-    ///@dev A bitmap of asset that are marginable
-    ///     assetId => assetId masks
-    mapping(uint256 => uint256) private partialMarginMasks;
-
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
-
-    /*///////////////////////////////////////////////////////////////
-                            Events
-    //////////////////////////////////////////////////////////////*/
-
-    event PartialMarginMaskSet(address asset0, address asset1, bool value);
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
@@ -272,24 +263,6 @@ contract CrossMarginPhysicalEngine is
     }
 
     /**
-     * @notice  sets the Partial Margin Mask for a pair of assets
-     * @param _asset0 the address of the asset 0
-     * @param _asset1 the address of the asset 1
-     * @param _value is margin-able
-     */
-    function setPartialMarginMask(address _asset0, address _asset1, bool _value) external {
-        _checkOwner();
-
-        uint256 collateralId = pomace.assetIds(_asset0);
-        uint256 mask = 1 << pomace.assetIds(_asset1);
-
-        if (_value) partialMarginMasks[collateralId] |= mask;
-        else partialMarginMasks[collateralId] &= ~mask;
-
-        emit PartialMarginMaskSet(_asset0, _asset1, _value);
-    }
-
-    /**
      * @dev view function to get all shorts, longs and collaterals
      */
     function marginAccounts(address _subAccount)
@@ -315,15 +288,6 @@ contract CrossMarginPhysicalEngine is
         account.longs = longs;
 
         return _getMinCollateral(account);
-    }
-
-    /**
-     * @notice  gets the Partial Margin Mask for a pair of assets
-     * @param _assetX the id of an asset
-     * @param _assetY the id of an asset
-     */
-    function getPartialMarginMask(address _assetX, address _assetY) external view returns (bool) {
-        return _getPartialMarginMask(pomace.assetIds(_assetX), pomace.assetIds(_assetY));
     }
 
     /**
@@ -441,40 +405,65 @@ contract CrossMarginPhysicalEngine is
         Balance[] memory collaterals = account.collaterals;
         Balance[] memory requirements = _getMinCollateral(account);
 
-        uint256[] memory masks = new uint256[](collaterals.length);
-        uint256[] memory amounts = new uint256[](collaterals.length);
+        uint256 collatCount = collaterals.length;
+
+        uint256[] memory masks;
+        uint256[] memory amounts = new uint256[](collatCount);
+        address[] memory addresses = new address[](collatCount);
+
+        IOracle oracle;
 
         unchecked {
             for (uint256 x; x < requirements.length; ++x) {
-                uint8 reqCollateralId = requirements[x].collateralId;
+                uint8 reqCollatId = requirements[x].collateralId;
+                (address reqCollatAddr,) = pomace.assets(reqCollatId);
                 uint256 reqAmount = requirements[x].amount;
 
+                masks = new uint256[](collatCount);
                 uint256 y;
 
-                for (y; y < collaterals.length; ++y) {
-                    // only setting amount on first pass, dont need to repeat each inner loop
-                    if (x == 0) amounts[y] = collaterals[y].amount;
+                for (y; y < collatCount; ++y) {
+                    uint8 collatId = collaterals[y].collateralId;
 
-                    uint8 collateralId = collaterals[y].collateralId;
+                    // only setting amount and address on first pass
+                    // dont need to repeat each inner loop
+                    if (x == 0) {
+                        amounts[y] = collaterals[y].amount;
 
-                    // setting mask to 1 if reqCollateralId is collateralId
-                    if (_getPartialMarginMask(reqCollateralId, collateralId)) masks[y] = 1;
+                        (address addr,) = pomace.assets(collatId);
+                        addresses[y] = addr;
+                    }
+
+                    if (reqCollatId == collatId) {
+                        masks[y] = 1 * UNIT;
+                    } else {
+                        // setting mask to price if reqCollateralId is collateralId
+                        if (_isCollateralizable(reqCollatId, collatId)) {
+                            if (address(oracle) == address(0)) oracle = pomace.oracle();
+
+                            masks[y] = oracle.getSpotPrice(addresses[y], reqCollatAddr);
+                        }
+                    }
                 }
 
-                uint256 marginValue = UintArrayLib.dot(amounts, masks);
+                uint256 marginValue = UintArrayLib.dot(amounts, masks) / UNIT;
 
                 // not enough collateral posted
                 if (marginValue < reqAmount) return false;
 
                 // reserving collateral to prevent double counting
-                for (y = 0; y < collaterals.length; ++y) {
+                for (y = 0; y < collatCount; ++y) {
                     if (masks[y] == 0) continue;
 
-                    if (reqAmount > amounts[y]) {
-                        reqAmount = reqAmount - amounts[y];
+                    marginValue = amounts[y] * masks[y] / UNIT;
+
+                    if (reqAmount >= marginValue) {
+                        reqAmount = reqAmount - marginValue;
                         amounts[y] = 0;
+
+                        if (reqAmount == 0) break;
                     } else {
-                        amounts[y] = uint80(amounts[y] - reqAmount);
+                        amounts[y] = uint80(amounts[y] - (amounts[y] * reqAmount / marginValue));
                         // reqAmount would now be set to zero,
                         // no longer need to reserve, so breaking
                         break;
@@ -571,13 +560,12 @@ contract CrossMarginPhysicalEngine is
     }
 
     /**
-     * @dev gets partial margin mask for a pair of assetIds
+     * @dev check if a pair of assetIds are collateralizable
      */
-    function _getPartialMarginMask(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
+    function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
         if (_assetId0 == _assetId1) return true;
 
-        uint256 mask = 1 << _assetId1;
-        return partialMarginMasks[_assetId0] & mask != 0;
+        return pomace.isCollateralizable(_assetId0, _assetId1);
     }
 
     function _socializeSettlement(SettlementTracker memory tracker, uint256 tokenId, uint256 shortAmount)

@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestTransfer_CM is CrossMarginFixture {
+contract TestTransfer_CMP is CrossMarginFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
     uint256 public c4000;

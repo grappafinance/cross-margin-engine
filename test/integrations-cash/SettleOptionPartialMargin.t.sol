@@ -15,7 +15,7 @@ import "../../src/config/types.sol";
 import "../mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
+contract TestSettleOptionPartialMargin_CMC is CrossMarginFixture {
     MockERC20 internal lsEth;
     MockERC20 internal sdyc;
 
@@ -37,8 +37,8 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         lsEthId = grappa.registerAsset(address(lsEth));
         sdycId = grappa.registerAsset(address(sdyc));
 
-        engine.setPartialMarginMask(address(weth), address(lsEth), true);
-        engine.setPartialMarginMask(address(usdc), address(sdyc), true);
+        engine.setCollateralizable(address(weth), address(lsEth), true);
+        engine.setCollateralizable(address(usdc), address(sdyc), true);
 
         pidLsEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(lsEth));
         pidSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(sdyc));

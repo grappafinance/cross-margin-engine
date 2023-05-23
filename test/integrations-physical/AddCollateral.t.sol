@@ -10,7 +10,7 @@ import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestAddCollateral_CM is CrossMarginFixture {
+contract TestAddCollateral_CMP is CrossMarginFixture {
     function setUp() public {
         // approve engine
         usdc.mint(address(this), 1000_000_000 * 1e6);

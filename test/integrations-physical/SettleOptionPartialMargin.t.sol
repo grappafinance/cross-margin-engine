@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 import "pomace/test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
+contract TestSettleOptionPartialMargin_CMP is CrossMarginFixture {
     MockERC20 internal lsEth;
     MockERC20 internal sdyc;
 
@@ -43,11 +43,11 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         lsEthId = pomace.registerAsset(address(lsEth));
         sdycId = pomace.registerAsset(address(sdyc));
 
-        pomace.setCollateralizableMask(address(weth), address(lsEth), true);
-        pomace.setCollateralizableMask(address(usdc), address(sdyc), true);
+        pomace.setCollateralizable(address(weth), address(lsEth), true);
+        pomace.setCollateralizable(address(usdc), address(sdyc), true);
 
-        engine.setPartialMarginMask(address(weth), address(lsEth), true);
-        engine.setPartialMarginMask(address(usdc), address(sdyc), true);
+        // engine.setCollateralizableMask(address(weth), address(lsEth), true);
+        // engine.setCollateralizableMask(address(usdc), address(sdyc), true);
 
         pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
         pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));

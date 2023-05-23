@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 import "pomace/test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestRemoveLong_CM is CrossMarginFixture {
+contract TestRemoveLong_CMP is CrossMarginFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
