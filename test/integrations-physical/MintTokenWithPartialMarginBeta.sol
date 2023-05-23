@@ -276,9 +276,9 @@ contract TestMintWithPartialMarginBeta_CMP is CrossMarginFixture {
         uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, exerciseWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](6);
-        actions[0] = createAddCollateralAction(usdtId, address(this), 1875 * 1e6);      // 1800 USD
-        actions[1] = createAddCollateralAction(sdycId, address(this), 960 * 1e6);       // 1200 USD
-        actions[2] = createAddCollateralAction(lsEthId, address(this), 0.625 * 1e18);   //    1 ETH
+        actions[0] = createAddCollateralAction(usdtId, address(this), 1875 * 1e6); // 1800 USD
+        actions[1] = createAddCollateralAction(sdycId, address(this), 960 * 1e6); // 1200 USD
+        actions[2] = createAddCollateralAction(lsEthId, address(this), 0.625 * 1e18); //    1 ETH
         actions[3] = createMintAction(tokenId1, address(this), amount);
         actions[4] = createMintAction(tokenId2, address(this), amount);
         actions[5] = createMintAction(tokenId3, address(this), amount);
