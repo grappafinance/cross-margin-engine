@@ -14,7 +14,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestBurnOption_CM is CrossMarginFixture {
+contract TestBurnOption_CMC is CrossMarginFixture {
     uint256 public expiry;
     uint256 public strikePrice = 4000 * UNIT;
     uint256 public depositAmount = 1 ether;

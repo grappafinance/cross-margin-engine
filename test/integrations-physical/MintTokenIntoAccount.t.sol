@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 import "pomace/test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestMintIntoAccount_CM is CrossMarginFixture {
+contract TestMintIntoAccount_CMP is CrossMarginFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 

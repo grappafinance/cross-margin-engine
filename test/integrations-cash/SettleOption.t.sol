@@ -14,7 +14,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCoveredCall_CM is CrossMarginFixture {
+contract TestSettleCoveredCall_CMC is CrossMarginFixture {
     uint256 public expiry;
 
     uint64 private amount = uint64(1 * UNIT);
@@ -218,7 +218,7 @@ contract TestSettleCoveredCall_CM is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCollateralizedPut_CM is CrossMarginFixture {
+contract TestSettleCollateralizedPut_CMC is CrossMarginFixture {
     uint256 public expiry;
 
     uint64 private amount = uint64(1 * UNIT);

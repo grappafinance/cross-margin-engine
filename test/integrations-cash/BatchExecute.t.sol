@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestBatchExecute_CM is CrossMarginFixture {
+contract TestBatchExecute_CMC is CrossMarginFixture {
     uint256 public expiry;
     uint256 public tokenId;
     uint256 public tokenId2;

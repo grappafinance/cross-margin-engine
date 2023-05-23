@@ -1,5 +1,5 @@
 <div align="center">
-  <h1> Cross Margin Physical Engine </h1>
+  <h1> Cross Margin Engine </h1>
 
   <img height=60 src="https://i.imgur.com/vSIO8xJ.png"/>
   <br/>

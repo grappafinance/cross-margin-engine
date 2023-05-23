@@ -1,8 +1,11 @@
 [profile.default]
 solc_version = '0.8.17'
+optimizer = false
+# via_ir = true # temporarily disable for faster snapshot
+
+[profile.optimized]
 optimizer = true
 optimizer_runs = 10000
-# via_ir = true # temporarily disable for faster snapshot
 
 gas_reports = [
   # "*",

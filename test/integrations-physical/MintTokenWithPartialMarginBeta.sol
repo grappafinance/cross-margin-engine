@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 import "pomace/test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
+contract TestMintWithPartialMarginBeta_CMP is CrossMarginFixture {
     MockERC20 internal lsEth;
     MockERC20 internal sdyc;
     MockERC20 internal usdt;
@@ -33,32 +33,39 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     uint256 public exerciseWindow;
 
     function setUp() public {
+        address usdcAddr = address(usdc);
+        address wethAddr = address(weth);
+
         lsEth = new MockERC20("LsETH", "LsETH", 18);
-        vm.label(address(lsEth), "LsETH");
+        address lsEthAddr = address(lsEth);
+        vm.label(lsEthAddr, "LsETH");
 
         sdyc = new MockERC20("SDYC", "SDYC", 6);
-        vm.label(address(sdyc), "SDYC");
+        address sdycAddr = address(sdyc);
+        vm.label(sdycAddr, "SDYC");
 
         usdt = new MockERC20("USDT", "USDT", 6);
-        vm.label(address(usdt), "USDT");
+        address usdtAddr = address(usdt);
+        vm.label(usdtAddr, "USDT");
 
-        sdycId = pomace.registerAsset(address(sdyc));
-        lsEthId = pomace.registerAsset(address(lsEth));
-        usdtId = pomace.registerAsset(address(usdt));
+        sdycId = pomace.registerAsset(sdycAddr);
+        lsEthId = pomace.registerAsset(lsEthAddr);
+        usdtId = pomace.registerAsset(usdtAddr);
 
-        pomace.setCollateralizableMask(address(weth), address(lsEth), true);
-        pomace.setCollateralizableMask(address(usdc), address(sdyc), true);
-        pomace.setCollateralizableMask(address(usdc), address(usdt), true);
-        pomace.setCollateralizableMask(address(usdt), address(sdyc), true);
+        pomace.setCollateralizable(wethAddr, lsEthAddr, true);
+        pomace.setCollateralizable(usdcAddr, sdycAddr, true);
+        pomace.setCollateralizable(usdcAddr, usdtAddr, true);
+        pomace.setCollateralizable(usdtAddr, sdycAddr, true);
 
-        engine.setPartialMarginMask(address(weth), address(lsEth), true);
-        engine.setPartialMarginMask(address(usdc), address(sdyc), true);
-        engine.setPartialMarginMask(address(usdc), address(usdt), true);
-        engine.setPartialMarginMask(address(usdt), address(sdyc), true);
+        oracle.setSpotPrice(wethAddr, 1 * UNIT);
+        oracle.setSpotPrice(lsEthAddr, 1 * UNIT);
+        oracle.setSpotPrice(sdycAddr, 1 * UNIT);
+        oracle.setSpotPrice(usdcAddr, 1 * UNIT);
+        oracle.setSpotPrice(usdtAddr, 1 * UNIT);
 
-        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
-        pidUsdtSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdt), address(sdyc));
-        pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
+        pidSdycCollat = pomace.getProductId(address(engine), wethAddr, usdcAddr, sdycAddr);
+        pidUsdtSdycCollat = pomace.getProductId(address(engine), wethAddr, usdtAddr, sdycAddr);
+        pidLsEthCollat = pomace.getProductId(address(engine), wethAddr, usdcAddr, lsEthAddr);
 
         sdyc.mint(address(this), 1000_000 * 1e6);
         sdyc.approve(address(engine), type(uint256).max);
@@ -73,25 +80,32 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         exerciseWindow = 300;
     }
 
-    function testRemovePartialMarginMask() public {
-        engine.setPartialMarginMask(address(lsEth), address(weth), true);
-        assertEq(engine.getPartialMarginMask(address(weth), address(lsEth)), true);
-
-        engine.setPartialMarginMask(address(weth), address(lsEth), false);
-
-        assertEq(engine.getPartialMarginMask(address(weth), address(lsEth)), false);
-        assertEq(engine.getPartialMarginMask(address(lsEth), address(weth)), true);
-        assertEq(engine.getPartialMarginMask(address(usdc), address(sdyc)), true);
-        assertEq(engine.getPartialMarginMask(address(usdc), address(usdt)), true);
-        assertEq(engine.getPartialMarginMask(address(usdt), address(sdyc)), true);
-    }
-
-    function testSameAssetPartialMarginMask() public {
-        assertEq(engine.getPartialMarginMask(address(weth), address(weth)), true);
-    }
-
     function testMintCall() public {
         uint256 depositAmount = 1 * 1e18;
+
+        uint256 strikePrice = 4000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, exerciseWindow);
+
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
+        actions[1] = createMintAction(tokenId, address(this), amount);
+        engine.execute(address(this), actions);
+
+        (Position[] memory shorts,,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(shorts[0].amount, amount);
+
+        assertEq(option.balanceOf(address(this), tokenId), amount);
+    }
+
+    function testMintCallWithHigherValueCollateral() public {
+        oracle.setSpotPrice(address(lsEth), 1.25 * 1e6);
+
+        uint256 depositAmount = 0.8 * 1e18;
 
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
@@ -141,6 +155,30 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
 
     function testMintPut() public {
         uint256 depositAmount = 2000 * 1e6;
+
+        uint256 strikePrice = 2000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, exerciseWindow);
+
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);
+        actions[1] = createMintAction(tokenId, address(this), amount);
+        engine.execute(address(this), actions);
+
+        (Position[] memory shorts,,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(shorts[0].amount, amount);
+
+        assertEq(option.balanceOf(address(this), tokenId), amount);
+    }
+
+    function testMintPutWithHigherValueCollateral() public {
+        oracle.setSpotPrice(address(sdyc), 1.25 * 1e6);
+
+        uint256 depositAmount = 1600 * 1e6;
 
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
@@ -216,6 +254,31 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         actions[0] = createAddCollateralAction(usdtId, address(this), 1800 * 1e6);
         actions[1] = createAddCollateralAction(sdycId, address(this), 1200 * 1e6);
         actions[2] = createAddCollateralAction(lsEthId, address(this), 1 * 1e18);
+        actions[3] = createMintAction(tokenId1, address(this), amount);
+        actions[4] = createMintAction(tokenId2, address(this), amount);
+        actions[5] = createMintAction(tokenId3, address(this), amount);
+        engine.execute(address(this), actions);
+
+        (Position[] memory shorts,,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 3);
+    }
+
+    function testMintMixedBagWithVariableValueCollateral() public {
+        oracle.setSpotPrice(address(usdt), 0.96 * 1e6);
+        oracle.setSpotPrice(address(sdyc), 1.25 * 1e6);
+        oracle.setSpotPrice(address(lsEth), 1.6 * 1e6);
+
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, exerciseWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidSdycCollat, expiry, 2000 * UNIT, exerciseWindow);
+        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, exerciseWindow);
+
+        ActionArgs[] memory actions = new ActionArgs[](6);
+        actions[0] = createAddCollateralAction(usdtId, address(this), 1875 * 1e6);      // 1800 USD
+        actions[1] = createAddCollateralAction(sdycId, address(this), 960 * 1e6);       // 1200 USD
+        actions[2] = createAddCollateralAction(lsEthId, address(this), 0.625 * 1e18);   //    1 ETH
         actions[3] = createMintAction(tokenId1, address(this), amount);
         actions[4] = createMintAction(tokenId2, address(this), amount);
         actions[5] = createMintAction(tokenId3, address(this), amount);

@@ -15,7 +15,7 @@ import "../../src/config/types.sol";
 import "../mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestRemoveLong_CM is CrossMarginFixture {
+contract TestRemoveLong_CMC is CrossMarginFixture {
     uint256 public expiry;
 
     function setUp() public {

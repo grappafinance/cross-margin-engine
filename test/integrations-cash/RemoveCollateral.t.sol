@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestRemoveCollateral_CM is CrossMarginFixture {
+contract TestRemoveCollateral_CMC is CrossMarginFixture {
     uint256 private depositAmount = 1000 * 1e6;
 
     function setUp() public {
