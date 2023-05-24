@@ -41,7 +41,7 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
         bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
         crossMarginEngine = address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData));
 
-        console.log("CrossMargin Physical Engine: \t\t", engineImplementation);
+        console.log("CrossMargin Physical Engine: \t\t\t", engineImplementation);
         console.log("CrossMargin Physical Engine Proxy: \t\t", crossMarginEngine);
     }
 
