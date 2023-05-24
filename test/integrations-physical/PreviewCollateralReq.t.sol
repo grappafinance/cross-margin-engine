@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 import "../../src/config/types.sol";
 import "../../src/libraries/AccountUtil.sol";
 
-contract PreviewCollateralReqBase is CrossMarginFixture {
+contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     uint8 constant PUT = uint8(0);
     uint8 constant CALL = uint8(1);
 
@@ -64,7 +64,7 @@ contract PreviewCollateralReqBase is CrossMarginFixture {
     function testIgnore() public {}
 }
 
-contract PreviewCollateralReq_CMPM is PreviewCollateralReqBase {
+contract PreviewCollateralReq_CMPM is PreviewCollateralReqBase_CMP {
     function testMarginRequirement1() public {
         OptionPosition[] memory positions = new OptionPosition[](6);
         positions[0] = _optionPosition(CALL, 21000, -1);

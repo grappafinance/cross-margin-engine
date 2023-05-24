@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
-contract Permissioned is CrossMarginFixture {
+contract Permissioned_CMC is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public tokenId;
     uint256 public amount;

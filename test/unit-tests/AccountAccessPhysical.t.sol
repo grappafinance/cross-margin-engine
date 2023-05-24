@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "../integrations-physical/CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "../integrations-physical/CrossMarginPhysicalFixture.t.sol";
 
 import {ActionArgs} from "pomace/config/types.sol";
 import "pomace/config/errors.sol";
@@ -10,7 +10,7 @@ import "pomace/config/errors.sol";
 import "../../src/config/errors.sol";
 import "../../src/settled-physical/types.sol";
 
-contract CrossMarginPhysicalEngineAccessTest is CrossMarginFixture {
+contract CrossMarginPhysicalEngineAccessTest is CrossMarginPhysicalFixture {
     uint256 private depositAmount = 100 * 1e6;
 
     address private subAccountIdToModify;

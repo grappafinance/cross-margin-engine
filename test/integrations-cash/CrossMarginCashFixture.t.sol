@@ -29,7 +29,7 @@ import {ActionHelper} from "grappa/test/shared/ActionHelper.sol";
 /**
  * helper contract for full margin integration test to inherit.
  */
-abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
+abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
     CrossMarginCashEngine internal engine;
     Grappa internal grappa;
     OptionToken internal option;

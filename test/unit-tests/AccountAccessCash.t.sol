@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "../integrations-cash/CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "../integrations-cash/CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/errors.sol";
@@ -10,7 +10,7 @@ import "grappa/config/errors.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
-contract CrossMarginCashEngineAccessTest is CrossMarginFixture {
+contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
     uint256 private depositAmount = 100 * 1e6;
 
     address private subAccountIdToModify;

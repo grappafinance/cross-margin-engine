@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 import {stdError} from "forge-std/Test.sol";
 
 import "grappa/config/types.sol";
@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestRemoveCollateral_CMC is CrossMarginFixture {
+contract TestRemoveCollateral_CMC is CrossMarginCashFixture {
     uint256 private depositAmount = 1000 * 1e6;
 
     function setUp() public {

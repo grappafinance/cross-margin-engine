@@ -28,7 +28,7 @@ import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
 /**
  * helper contract for full margin integration test to inherit.
  */
-abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
+abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
     CrossMarginPhysicalEngine internal engine;
     Pomace internal pomace;
     OptionToken internal option;

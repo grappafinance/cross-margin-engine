@@ -524,7 +524,7 @@ contract TestStructures_CMPM is Test {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestVanillaCall_CMM is Test {
+contract TestVanillaCall_CMPM is Test {
     using CrossMarginPhysicalMath for CrossMarginDetail;
 
     int256[] private putWeights;
@@ -564,7 +564,7 @@ contract TestVanillaCall_CMM is Test {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestVanillaPut_CMM is Test {
+contract TestVanillaPut_CMPM is Test {
     using CrossMarginPhysicalMath for CrossMarginDetail;
 
     int256[] private putWeights;
@@ -603,7 +603,7 @@ contract TestVanillaPut_CMM is Test {
     }
 }
 
-contract TestStrangles is Test {
+contract TestStrangles_CMPM is Test {
     using CrossMarginPhysicalMath for CrossMarginDetail;
 
     int256[] private putWeights;
@@ -700,7 +700,7 @@ contract TestStrangles is Test {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestCornerCases_CMM is Test {
+contract TestCornerCases_CMPM is Test {
     using CrossMarginPhysicalMath for CrossMarginDetail;
 
     int256[] private putWeights;

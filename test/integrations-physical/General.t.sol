@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 
 import "pomace/test/mocks/MockERC20.sol";
 
-contract CrossEngineGenernal is CrossMarginFixture {
+contract General_CMP is CrossMarginPhysicalFixture {
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
         usdc.approve(address(engine), type(uint256).max);

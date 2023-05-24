@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestTransfer_CMP is CrossMarginFixture {
+contract TestTransfer_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
     uint256 public c4000;

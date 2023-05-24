@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 import "../mocks/MockERC20.sol";
 
 import "pomace/config/enums.sol";
@@ -14,7 +14,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleOption_CMP is CrossMarginFixture {
+contract TestSettleOption_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
@@ -55,7 +55,7 @@ contract TestSettleOption_CMP is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCoveredCall_CMP is CrossMarginFixture {
+contract TestSettleCoveredCall_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
@@ -150,7 +150,7 @@ contract TestSettleCoveredCall_CMP is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCollateralizedPut_CMP is CrossMarginFixture {
+contract TestSettleCollateralizedPut_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
@@ -245,7 +245,7 @@ contract TestSettleCollateralizedPut_CMP is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleShortPositions_CMP is CrossMarginFixture {
+contract TestSettleShortPositions_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
@@ -426,7 +426,7 @@ contract TestSettleShortPositions_CMP is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestExerciseLongPositions_CMP is CrossMarginFixture {
+contract TestExerciseLongPositions_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 
@@ -652,7 +652,7 @@ contract TestExerciseLongPositions_CMP is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleSocializedLosses_CMP is CrossMarginFixture {
+contract TestSettleSocializedLosses_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;
 

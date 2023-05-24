@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestTransfer_CMC is CrossMarginFixture {
+contract TestTransfer_CMC is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public c4000;
     uint256 public c5000;

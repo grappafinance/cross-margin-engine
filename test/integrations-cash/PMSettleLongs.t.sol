@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestPMSettleLongCallsCM is CrossMarginFixture {
+contract TestPMSettleLongCalls_CMC is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public tokenId;
     uint256 public depositAmount = 1 * 1e18;
@@ -218,7 +218,7 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
     }
 }
 
-contract TestPMSettleLongPutsCM is CrossMarginFixture {
+contract TestPMSettleLongPutsCM is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public tokenId;
     uint256 public depositAmount = 2000 * 1e6;

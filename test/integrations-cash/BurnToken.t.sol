@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 import {stdError} from "forge-std/Test.sol";
 
 import "grappa/config/types.sol";
@@ -14,7 +14,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestBurnOption_CMC is CrossMarginFixture {
+contract TestBurnOption_CMC is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public strikePrice = 4000 * UNIT;
     uint256 public depositAmount = 1 ether;

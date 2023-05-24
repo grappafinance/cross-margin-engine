@@ -17,30 +17,32 @@ import "../src/settled-physical/CrossMarginPhysicalEngineProxy.sol";
 
 import "../test/utils/Utilities.sol";
 
-contract Deploy is Script, Utilities {
+contract DeployPhysicalMarginEngine is Script, Utilities {
     function run() external {
         vm.startBroadcast();
 
+        Pomace pomace = Pomace(vm.envAddress("Pomace"));
+        address optionToken = vm.envAddress("PomaceOptionToken");
+
         // deploy and register Cross Margin Engine
-        // deployCrossMarginEngine(pomace, optionToken);
+        deployCrossMarginPhysicalEngine(pomace, optionToken);
 
         // Todo: transfer ownership to Pomace multisig and Hashnote accordingly.
         vm.stopBroadcast();
     }
 
-    function deployCrossMarginEngine(Pomace pomace, address optionToken) public returns (address crossMarginEngine) {
+    function deployCrossMarginPhysicalEngine(Pomace pomace, address optionToken) public returns (address crossMarginEngine) {
+        uint256 nonce = vm.getNonce(msg.sender);
+        console.log("nonce", nonce);
+        console.log("Deployer", msg.sender);
+
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
         address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), optionToken));
         bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
         crossMarginEngine = address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData));
 
-        console.log("CrossMargin Engine: \t\t", crossMarginEngine);
-
-        // ============ Register Full Margin Engine ============== //
-        {
-            uint256 engineId = pomace.registerEngine(crossMarginEngine);
-            console.log("   -> Registered ID:", engineId);
-        }
+        console.log("CrossMargin Physical Engine: \t\t", engineImplementation);
+        console.log("CrossMargin Physical Engine Proxy: \t\t", crossMarginEngine);
     }
 
     // add a function prefixed with test here so forge coverage will ignore this file

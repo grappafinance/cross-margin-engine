@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 import "pomace/test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestMintWithPartialMarginBeta_CMP is CrossMarginFixture {
+contract TestMintWithPartialMarginBeta_CMP is CrossMarginPhysicalFixture {
     MockERC20 internal lsEth;
     MockERC20 internal sdyc;
     MockERC20 internal usdt;

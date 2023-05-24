@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 
 import "../../src/libraries/AccountUtil.sol";
 
-contract PreviewCollateralReqBase is CrossMarginFixture {
+contract PreviewCollateralReqBase_CMC is CrossMarginCashFixture {
     uint256 public expiry;
 
     struct OptionPosition {
@@ -58,7 +58,7 @@ contract PreviewCollateralReqBase is CrossMarginFixture {
     function testIgnore() public {}
 }
 
-contract PreviewCollateralReq_CMCM is PreviewCollateralReqBase {
+contract PreviewCollateralReq_CMCM is PreviewCollateralReqBase_CMC {
     function testMarginRequirement1() public {
         OptionPosition[] memory positions = new OptionPosition[](6);
         positions[0] = OptionPosition(TokenType.CALL, 21000 * UNIT, -1 * sUNIT);

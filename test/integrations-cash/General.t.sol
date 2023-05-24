@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -14,7 +14,7 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
-contract CrossEngineGenernal is CrossMarginFixture {
+contract General_CMC is CrossMarginCashFixture {
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
         usdc.approve(address(engine), type(uint256).max);

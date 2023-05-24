@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 import "../mocks/MockERC20.sol";
 
 import "grappa/config/types.sol";
@@ -14,7 +14,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCoveredCall_CMC is CrossMarginFixture {
+contract TestSettleCoveredCall_CMC is CrossMarginCashFixture {
     uint256 public expiry;
 
     uint64 private amount = uint64(1 * UNIT);
@@ -218,7 +218,7 @@ contract TestSettleCoveredCall_CMC is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettleCollateralizedPut_CMC is CrossMarginFixture {
+contract TestSettleCollateralizedPut_CMC is CrossMarginCashFixture {
     uint256 public expiry;
 
     uint64 private amount = uint64(1 * UNIT);
@@ -346,7 +346,7 @@ contract TestSettleCollateralizedPut_CMC is CrossMarginFixture {
     }
 }
 
-contract TestLongShortSettlement is CrossMarginFixture {
+contract TestLongShortSettlement is CrossMarginCashFixture {
     uint256 public expiry;
 
     uint64 private amount = uint64(1 * UNIT);

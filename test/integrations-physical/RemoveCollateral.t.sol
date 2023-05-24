@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "./CrossMarginFixture.t.sol";
+import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
 import {stdError} from "forge-std/Test.sol";
 
 import "pomace/config/enums.sol";
@@ -13,7 +13,7 @@ import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestRemoveCollateral_CMP is CrossMarginFixture {
+contract TestRemoveCollateral_CMP is CrossMarginPhysicalFixture {
     uint256 private depositAmount = 1000 * 1e6;
 
     function setUp() public {
