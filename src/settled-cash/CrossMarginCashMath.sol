@@ -354,16 +354,16 @@ library CrossMarginCashMath {
         ProductDetails memory product;
         //  used to cache product id between loop iterations
         //  default value of 0 is not a valid productId so the first run will always set the cache
-        uint40 lastProductId;
+        uint40 lastUsedProductId;
 
         for (uint256 i; i < positions.length;) {
             (, uint40 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
 
             // cache product detail if a productId differs from a previous iteration
-            if (productId != lastProductId) {
+            if (productId != lastUsedProductId) {
                 product = _getProductDetails(grappa, productId);
 
-                lastProductId = productId;
+                lastUsedProductId = productId;
             }
 
             bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
