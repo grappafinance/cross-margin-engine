@@ -348,10 +348,21 @@ library CrossMarginPhysicalMath {
         Position[] memory positions = shorts.concat(longs);
         uint256 shortLength = shorts.length;
 
+        // used to cache product detail during the loop to save gas when productIds are the same between iterations
+        ProductDetails memory product;
+        //  used to cache product id between loop iterations
+        //  default value of 0 is not a valid productId so the first run will always set the cache
+        uint32 lastUsedProductId;
+
         for (uint256 i; i < positions.length;) {
             (, uint32 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
 
-            ProductDetails memory product = _getProductDetails(pomace, productId);
+            // cache product detail if a productId differs from a previous iteration
+            if (productId != lastUsedProductId) {
+                product = _getProductDetails(pomace, productId);
+
+                lastUsedProductId = productId;
+            }
 
             bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
 
