@@ -8,10 +8,6 @@ import "openzeppelin/utils/Strings.sol";
 
 import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "pomace/core/OptionToken.sol";
-import "pomace/core/OptionTokenDescriptor.sol";
-import "pomace/core/Pomace.sol";
-import "pomace/core/PomaceProxy.sol";
 import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
 import "../src/settled-physical/CrossMarginPhysicalEngineProxy.sol";
 
@@ -21,7 +17,7 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
     function run() external {
         vm.startBroadcast();
 
-        Pomace pomace = Pomace(vm.envAddress("PomaceProxy"));
+        address pomace = vm.envAddress("PomaceProxy");
         address optionToken = vm.envAddress("PomaceOptionToken");
 
         // deploy and register Cross Margin Engine
@@ -31,13 +27,9 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
         vm.stopBroadcast();
     }
 
-    function deployCrossMarginPhysicalEngine(Pomace pomace, address optionToken) public returns (address crossMarginEngine) {
-        uint256 nonce = vm.getNonce(msg.sender);
-        console.log("nonce", nonce);
-        console.log("Deployer", msg.sender);
-
+    function deployCrossMarginPhysicalEngine(address pomace, address optionToken) public returns (address crossMarginEngine) {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), optionToken));
+        address engineImplementation = address(new CrossMarginPhysicalEngine(pomace, optionToken));
         bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
         crossMarginEngine = address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData));
 
