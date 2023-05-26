@@ -21,7 +21,7 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
     function run() external {
         vm.startBroadcast();
 
-        Pomace pomace = Pomace(vm.envAddress("Pomace"));
+        Pomace pomace = Pomace(vm.envAddress("PomaceProxy"));
         address optionToken = vm.envAddress("PomaceOptionToken");
 
         // deploy and register Cross Margin Engine
