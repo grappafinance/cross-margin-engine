@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import "../../src/settled-cash/CrossMarginCashEngine.sol";
+import {CrossMarginCashEngine} from "../../src/settled-cash/CrossMarginCashEngine.sol";
 import "../../src/settled-cash/CrossMarginCashEngineProxy.sol";
 import {Grappa} from "grappa/core/Grappa.sol";
 import "grappa/core/GrappaProxy.sol";
@@ -12,7 +12,7 @@ import "grappa/core/OptionToken.sol";
 // Mocks
 import "../mocks/MockERC20.sol";
 import "../mocks/MockWhitelist.sol";
-import "grappa/test/mocks/MockOracle.sol";
+import "grappa-test/mocks/MockOracle.sol";
 
 // Types
 import "grappa/config/types.sol";
@@ -22,7 +22,7 @@ import "../../src/config/errors.sol";
 
 import "../utils/Utilities.sol";
 
-import {ActionHelper} from "grappa/test/shared/ActionHelper.sol";
+import {ActionHelper} from "grappa-test/shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 
