@@ -93,8 +93,10 @@ contract CrossMarginPhysicalEngine is
                             Initializer
     //////////////////////////////////////////////////////////////*/
 
-    function initialize() external initializer {
-        __Ownable_init();
+    function initialize(address _owner) external initializer {
+        if (_owner == address(0)) revert BadAddress();
+
+        _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
     }
 

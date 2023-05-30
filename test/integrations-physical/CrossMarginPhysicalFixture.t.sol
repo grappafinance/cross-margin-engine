@@ -79,7 +79,7 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
 
         address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option))); // nonce 7
 
-        bytes memory engineData = abi.encode(CrossMarginPhysicalEngine.initialize.selector);
+        bytes memory engineData = abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, address(this));
 
         engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData))); // 8
         vm.label(address(engine), "CrossMarginPhysicalEngine");

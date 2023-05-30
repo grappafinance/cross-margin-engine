@@ -79,7 +79,7 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
 
         address engineImplementation = address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle))); // nonce 7
 
-        bytes memory engineData = abi.encode(CrossMarginCashEngine.initialize.selector);
+        bytes memory engineData = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
 
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(engineImplementation, engineData))); // 8
 
