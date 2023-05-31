@@ -73,13 +73,13 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
 
         address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
 
-        bytes memory grappaData = abi.encode(Grappa.initialize.selector);
+        bytes memory grappaData = abi.encodeWithSelector(Grappa.initialize.selector, address(this));
 
         grappa = Grappa(address(new GrappaProxy(grappaImplementation, grappaData))); // 6
 
         address engineImplementation = address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle))); // nonce 7
 
-        bytes memory engineData = abi.encode(CrossMarginCashEngine.initialize.selector);
+        bytes memory engineData = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
 
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(engineImplementation, engineData))); // 8
 

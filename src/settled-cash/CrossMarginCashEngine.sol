@@ -104,8 +104,11 @@ contract CrossMarginCashEngine is
                             Initializer
     //////////////////////////////////////////////////////////////*/
 
-    function initialize() external initializer {
-        __Ownable_init();
+    function initialize(address _owner) external initializer {
+        // solhint-disable-next-line reason-string
+        if (_owner == address(0)) revert();
+
+        _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
     }
 
