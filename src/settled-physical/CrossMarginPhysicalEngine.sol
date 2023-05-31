@@ -94,7 +94,8 @@ contract CrossMarginPhysicalEngine is
     //////////////////////////////////////////////////////////////*/
 
     function initialize(address _owner) external initializer {
-        if (_owner == address(0)) revert BadAddress();
+        // solhint-disable-next-line reason-string
+        if (_owner == address(0)) revert();
 
         _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
