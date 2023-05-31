@@ -12,7 +12,7 @@ import "grappa/core/OptionToken.sol";
 // Mocks
 import "../mocks/MockERC20.sol";
 import "../mocks/MockWhitelist.sol";
-import "grappa/test/mocks/MockOracle.sol";
+import "grappa-test/mocks/MockOracle.sol";
 
 // Types
 import "grappa/config/types.sol";
@@ -22,7 +22,7 @@ import "../../src/config/errors.sol";
 
 import "../utils/Utilities.sol";
 
-import {ActionHelper} from "grappa/test/shared/ActionHelper.sol";
+import {ActionHelper} from "grappa-test/shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 
