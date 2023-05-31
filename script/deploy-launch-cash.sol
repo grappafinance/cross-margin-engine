@@ -30,7 +30,7 @@ contract Deploy is Script, Utilities {
     function deployCrossMarginEngine(address grappa, address optionToken) public returns (address crossMarginEngine) {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
         address engineImplementation = address(new CrossMarginCashEngine(address(grappa), optionToken, address(0)));
-        bytes memory engineData = abi.encode(CrossMarginCashEngine.initialize.selector);
+        bytes memory engineData = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
         crossMarginEngine = address(new CrossMarginCashEngineProxy(engineImplementation, engineData));
 
         console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);

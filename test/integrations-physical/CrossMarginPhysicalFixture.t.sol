@@ -72,7 +72,7 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
 
         address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 
-        bytes memory pomaceData = abi.encode(Pomace.initialize.selector);
+        bytes memory pomaceData = abi.encodeWithSelector(Pomace.initialize.selector, address(this));
 
         pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 6
         vm.label(address(pomace), "Pomace");
