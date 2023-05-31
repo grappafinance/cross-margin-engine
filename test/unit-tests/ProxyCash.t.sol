@@ -22,7 +22,7 @@ contract CashEngineProxyTest is Test {
 
     constructor() {
         implementation = new CrossMarginCashEngine(address(0), address(0), address(0));
-        bytes memory data = abi.encode(CrossMarginCashEngine.initialize.selector);
+        bytes memory data = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
 
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(address(implementation), data)));
     }
@@ -33,7 +33,7 @@ contract CashEngineProxyTest is Test {
 
     function testImplementationIsInitialized() public {
         vm.expectRevert("Initializable: contract is already initialized");
-        implementation.initialize();
+        implementation.initialize(address(this));
     }
 
     function testProxyOwnerIsSelf() public {
@@ -42,7 +42,7 @@ contract CashEngineProxyTest is Test {
 
     function testProxyIsInitialized() public {
         vm.expectRevert("Initializable: contract is already initialized");
-        engine.initialize();
+        engine.initialize(address(this));
     }
 
     function testCannotUpgradeFromNonOwner() public {
