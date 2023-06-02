@@ -95,8 +95,10 @@ contract CrossMarginCashEngine is
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
-    // solhint-disable-next-line no-empty-blocks
     constructor(address _grappa, address _optionToken, address _oracle) BaseEngine(_grappa, _optionToken) initializer {
+        // solhint-disable-next-line reason-string
+        if (_oracle == address(0)) revert();
+
         oracle = IOracle(_oracle);
     }
 
