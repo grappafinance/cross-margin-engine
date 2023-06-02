@@ -42,7 +42,7 @@ import "pomace/config/errors.sol";
  * @author  @dsshap, @antoncoding
  * @notice  Fully collateralized margin engine
  *             Users can deposit collateral into Cross Margin and mint optionTokens (debt) out of it.
- *             Interacts with OptionToken to mint / burn
+ *             Interacts with PhysicalOptionToken to mint / burn
  *             Interacts with pomace to fetch registered asset info
  */
 contract CrossMarginPhysicalEngine is

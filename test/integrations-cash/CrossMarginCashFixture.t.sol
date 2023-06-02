@@ -7,7 +7,7 @@ import {CrossMarginCashEngine} from "../../src/settled-cash/CrossMarginCashEngin
 import "../../src/settled-cash/CrossMarginCashEngineProxy.sol";
 import {Grappa} from "grappa/core/Grappa.sol";
 import "grappa/core/GrappaProxy.sol";
-import "grappa/core/OptionToken.sol";
+import "grappa/core/CashOptionToken.sol";
 
 // Mocks
 import "../mocks/MockERC20.sol";
@@ -32,7 +32,7 @@ import {ActionHelper} from "grappa-test/shared/ActionHelper.sol";
 abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
     CrossMarginCashEngine internal engine;
     Grappa internal grappa;
-    OptionToken internal option;
+    CashOptionToken internal option;
 
     MockERC20 internal usdc;
     MockERC20 internal weth;
@@ -69,7 +69,7 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
         // predict address of margin account and use it here
         address grappaAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(grappaAddr, address(0)); // nonce: 4
+        option = new CashOptionToken(grappaAddr, address(0)); // nonce: 4
 
         address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
 
