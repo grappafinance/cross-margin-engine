@@ -10,8 +10,6 @@ optimizer_runs = 10000
 gas_reports = [
   # "*",
   "Pomace",
-  "CashOptionToken",
-  "PhysicalOptionToken",
   "CrossMarginEngine",
   "ChainlinkOracle",
   "ChainlinkOracleDisputable"
