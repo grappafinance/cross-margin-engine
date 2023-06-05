@@ -7,7 +7,7 @@ import "../../src/settled-physical/CrossMarginPhysicalEngine.sol";
 import "../../src/settled-physical/CrossMarginPhysicalEngineProxy.sol";
 import {Pomace} from "pomace/core/Pomace.sol";
 import "pomace/core/PomaceProxy.sol";
-import "pomace/core/OptionToken.sol";
+import "pomace/core/PhysicalOptionToken.sol";
 
 // Mocks
 import "../mocks/MockERC20.sol";
@@ -31,7 +31,7 @@ import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
 abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
     CrossMarginPhysicalEngine internal engine;
     Pomace internal pomace;
-    OptionToken internal option;
+    PhysicalOptionToken internal option;
 
     MockERC20 internal usdc;
     MockERC20 internal weth;
@@ -67,8 +67,8 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
         // predict address of margin account and use it here
         address pomaceAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(pomaceAddr, address(0)); // nonce: 4
-        vm.label(address(option), "OptionToken");
+        option = new PhysicalOptionToken(pomaceAddr, address(0)); // nonce: 4
+        vm.label(address(option), "PhysicalOptionToken");
 
         address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 
