@@ -15,6 +15,8 @@ import "../test/utils/Utilities.sol";
 
 contract Deploy is Script, Utilities {
     function run() external {
+        console.log("Deployer", msg.sender);
+
         vm.startBroadcast();
 
         address grappa = vm.envAddress("GrappaProxy");
@@ -28,7 +30,7 @@ contract Deploy is Script, Utilities {
 
     function deployCrossMarginEngine(address grappa, address optionToken) public returns (address crossMarginEngine) {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginCashEngine(address(grappa), optionToken, address(0)));
+        address engineImplementation = address(new CrossMarginCashEngine(address(grappa), optionToken, vm.envAddress("CrossMarginCashOracle")));
         bytes memory engineData =
             abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
         crossMarginEngine = address(new CrossMarginCashEngineProxy(engineImplementation, engineData));

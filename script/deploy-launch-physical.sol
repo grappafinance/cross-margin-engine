@@ -15,6 +15,8 @@ import "../test/utils/Utilities.sol";
 
 contract DeployPhysicalMarginEngine is Script, Utilities {
     function run() external {
+        console.log("Deployer", msg.sender);
+        
         vm.startBroadcast();
 
         address pomace = vm.envAddress("PomaceProxy");
@@ -31,10 +33,11 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
         address engineImplementation = address(new CrossMarginPhysicalEngine(pomace, optionToken));
         bytes memory engineData =
             abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
+        console.logBytes(engineData);
         crossMarginEngine = address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData));
 
-        console.log("CrossMargin Physical Engine: \t\t\t", engineImplementation);
-        console.log("CrossMargin Physical Engine Proxy: \t\t", crossMarginEngine);
+        console.log("CrossMargin Physical Engine: \t\t", engineImplementation);
+        console.log("CrossMargin Physical Engine Proxy: \t", crossMarginEngine);
     }
 
     // add a function prefixed with test here so forge coverage will ignore this file
