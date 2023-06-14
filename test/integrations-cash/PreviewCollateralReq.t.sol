@@ -15,7 +15,7 @@ import "../../src/config/types.sol";
 import "../../src/libraries/AccountUtil.sol";
 
 contract PreviewCollateralReqBase_CMC is CrossMarginCashFixture {
-    uint256 public expiry;
+    uint256 public expiry = block.timestamp + 1 days;
 
     struct OptionPosition {
         TokenType tokenType;

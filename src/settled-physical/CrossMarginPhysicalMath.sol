@@ -254,7 +254,7 @@ library CrossMarginPhysicalMath {
     /**
      * @notice calculates the amount of underlying is needed for call options
      * @dev only called if there are call options
-     * @param callWeights number of call options at a coorisponding strike
+     * @param callWeights number of call options at a corresponding strike
      * @return underlyingNeeded amount of underlying needed
      */
     function _getUnderlyingNeeded(int256[] memory callWeights) internal pure returns (uint256 underlyingNeeded) {
@@ -354,45 +354,46 @@ library CrossMarginPhysicalMath {
         //  default value of 0 is not a valid productId so the first run will always set the cache
         uint32 lastUsedProductId;
 
-        for (uint256 i; i < positions.length;) {
-            (, uint32 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
+        unchecked {
+            for (uint256 i; i < positions.length; ++i) {
+                (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
 
-            // cache product detail if a productId differs from a previous iteration
-            if (productId != lastUsedProductId) {
-                product = _getProductDetails(pomace, productId);
+                // skip expired positions
+                if (expiry < block.timestamp + exerciseWindow) continue;
 
-                lastUsedProductId = productId;
-            }
+                // cache product detail if a productId differs from a previous iteration
+                if (productId != lastUsedProductId) {
+                    product = _getProductDetails(pomace, productId);
 
-            bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
+                    lastUsedProductId = productId;
+                }
 
-            (bool found, uint256 index) = BytesArrayUtil.indexOf(usceLookUp, pos);
+                bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
 
-            CrossMarginDetail memory detail;
+                (bool found, uint256 index) = BytesArrayUtil.indexOf(usceLookUp, pos);
 
-            if (found) {
-                detail = details[index];
-            } else {
-                usceLookUp = BytesArrayUtil.append(usceLookUp, pos);
+                CrossMarginDetail memory detail;
 
-                detail.underlyingId = product.underlyingId;
-                detail.underlyingDecimals = product.underlyingDecimals;
-                detail.numeraireId = product.strikeId;
-                detail.numeraireDecimals = product.strikeDecimals;
+                if (found) {
+                    detail = details[index];
+                } else {
+                    usceLookUp = BytesArrayUtil.append(usceLookUp, pos);
 
-                detail.expiry = expiry;
+                    detail.underlyingId = product.underlyingId;
+                    detail.underlyingDecimals = product.underlyingDecimals;
+                    detail.numeraireId = product.strikeId;
+                    detail.numeraireDecimals = product.strikeDecimals;
 
-                details = details.append(detail);
-            }
+                    detail.expiry = expiry;
 
-            int256 amount = int256(int64(positions[i].amount));
+                    details = details.append(detail);
+                }
 
-            if (i < shortLength) amount = -amount;
+                int256 amount = int256(int64(positions[i].amount));
 
-            _processDetailWithToken(detail, positions[i].tokenId, amount);
+                if (i < shortLength) amount = -amount;
 
-            unchecked {
-                ++i;
+                _processDetailWithToken(detail, positions[i].tokenId, amount);
             }
         }
     }

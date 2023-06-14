@@ -16,7 +16,7 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     uint8 constant PUT = uint8(0);
     uint8 constant CALL = uint8(1);
 
-    uint256 public expiry;
+    uint256 public expiry = block.timestamp + 1 days;
 
     struct OptionPosition {
         TokenType tokenType;
@@ -53,11 +53,11 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     }
 
     function _callTokenId(uint256 _strikePrice) internal view returns (uint256 tokenId) {
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, _strikePrice, 0);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, _strikePrice, 30 minutes);
     }
 
     function _putTokenId(uint256 _strikePrice) internal view returns (uint256 tokenId) {
-        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, _strikePrice, 0);
+        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, _strikePrice, 30 minutes);
     }
 
     // add a function prefixed with test here so forge coverage will ignore this file

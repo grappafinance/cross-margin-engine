@@ -350,6 +350,9 @@ contract CrossMarginCashEngine is
     function _isAccountAboveWater(address _subAccount) internal view override returns (bool) {
         CrossMarginAccount memory account = accounts[_subAccount];
 
+        // skip margin requirements check if no shorts
+        if (account.shorts.length == 0) return true;
+
         Balance[] memory collaterals = account.collaterals;
         Balance[] memory requirements = _getMinCollateral(account);
 
