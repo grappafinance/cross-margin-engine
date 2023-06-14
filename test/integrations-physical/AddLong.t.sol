@@ -9,7 +9,7 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
-import "pomace/test/mocks/MockERC20.sol";
+import "pomace-test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestAddLong_CMP is CrossMarginPhysicalFixture {

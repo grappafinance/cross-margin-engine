@@ -12,7 +12,7 @@ import "pomace/core/PhysicalOptionToken.sol";
 // Mocks
 import "../mocks/MockERC20.sol";
 import {MockWhitelist} from "../mocks/MockWhitelist.sol";
-import "pomace/test/mocks/MockOracle.sol";
+import "pomace-test/mocks/MockOracle.sol";
 
 import {ActionArgs} from "pomace/config/types.sol";
 import "pomace/config/enums.sol";
@@ -21,7 +21,7 @@ import "../../src/config/errors.sol";
 
 import "../utils/Utilities.sol";
 
-import {ActionHelper} from "pomace/test/shared/ActionHelper.sol";
+import {ActionHelper} from "pomace-test/shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 
