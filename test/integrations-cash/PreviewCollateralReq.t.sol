@@ -330,16 +330,29 @@ contract PreviewCollateralReq_CMCM is PreviewCollateralReqBase_CMC {
     function testStrangleSpread2() public {
         OptionPosition[] memory positions = new OptionPosition[](4);
 
-        positions[0] = OptionPosition(TokenType.CALL, 20000 * UNIT, -1 * sUNIT);
-        positions[1] = OptionPosition(TokenType.CALL, 21000 * UNIT, 1 * sUNIT);
-        positions[2] = OptionPosition(TokenType.PUT, 17000 * UNIT, 1 * sUNIT);
-        positions[3] = OptionPosition(TokenType.PUT, 18000 * UNIT, -1 * sUNIT);
+        positions[0] = OptionPosition(TokenType.PUT, 17000 * UNIT, 1 * sUNIT);
+        positions[1] = OptionPosition(TokenType.PUT, 18000 * UNIT, -1 * sUNIT);
+        positions[2] = OptionPosition(TokenType.CALL, 20000 * UNIT, -1 * sUNIT);
+        positions[3] = OptionPosition(TokenType.CALL, 21000 * UNIT, 1 * sUNIT);
 
         Balance[] memory balances = _previewMinCollateral(positions);
 
         assertEq(balances.length, 1);
         assertEq(balances[0].collateralId, usdcId);
         assertEq(balances[0].amount, 1000 * UNIT);
+    }
+
+    function testLongStrangleSpread2() public {
+        OptionPosition[] memory positions = new OptionPosition[](4);
+
+        positions[0] = OptionPosition(TokenType.PUT, 17000 * UNIT, -1 * sUNIT);
+        positions[1] = OptionPosition(TokenType.PUT, 18000 * UNIT, 1 * sUNIT);
+        positions[2] = OptionPosition(TokenType.CALL, 20000 * UNIT, 1 * sUNIT);
+        positions[3] = OptionPosition(TokenType.CALL, 21000 * UNIT, -1 * sUNIT);
+
+        Balance[] memory balances = _previewMinCollateral(positions);
+
+        assertEq(balances.length, 0);
     }
 
     function testOneByTwoCall() public {
