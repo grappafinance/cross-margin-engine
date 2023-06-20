@@ -310,3 +310,156 @@ contract TestPMSettleLongPutsCM is CrossMarginCashFixture {
         assertEq(afterCollaters.length, 0);
     }
 }
+
+contract TestPMSettleLongStrangleSpreadCM is CrossMarginCashFixture {
+    uint256 public expiry;
+    uint256 public depositAmount = 100 * 1e6;
+    uint256 public amount = 1 * UNIT;
+
+    function setUp() public {
+        usdc.mint(address(this), 1000_000 * 1e6);
+        usdc.approve(address(engine), type(uint256).max);
+
+        vm.startPrank(alice);
+        engine.setAccountAccess(address(this), type(uint256).max);
+        vm.stopPrank();
+
+        expiry = block.timestamp + 1 days;
+        oracle.setSpotPrice(address(weth), 1900 * UNIT);
+
+        uint256 token1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1700 * UNIT, 0);
+        uint256 token2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1800 * UNIT, 0);
+        uint256 token3 = getTokenId(TokenType.CALL, pidUsdcCollat, expiry, 2000 * UNIT, 0);
+        uint256 token4 = getTokenId(TokenType.CALL, pidUsdcCollat, expiry, 2100 * UNIT, 0);
+
+        // Long Strangle Spread
+        ActionArgs[] memory aliceActions = new ActionArgs[](2);
+        aliceActions[0] = createMintIntoAccountAction(token1, address(this), amount);
+        aliceActions[1] = createMintIntoAccountAction(token4, address(this), amount);
+
+        // Short Strangle Spread
+        ActionArgs[] memory selfActions = new ActionArgs[](3);
+        selfActions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        selfActions[1] = createMintIntoAccountAction(token2, alice, amount);
+        selfActions[2] = createMintIntoAccountAction(token3, alice, amount);
+
+        BatchExecute[] memory batch = new BatchExecute[](2);
+        batch[0] = BatchExecute(alice, aliceActions);
+        batch[1] = BatchExecute(address(this), selfActions);
+
+        engine.batchExecute(batch);
+    }
+
+    function testSettleShortPutOTM() public {
+        (,, Balance[] memory collatBefore) = engine.marginAccounts(alice);
+        assertEq(collatBefore.length, 0);
+
+        vm.warp(expiry);
+
+        oracle.setExpiryPrice(address(weth), address(usdc), 1950 * UNIT);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(alice, actions);
+        engine.execute(address(this), actions);
+
+        (Position[] memory shorts, Position[] memory longs, Balance[] memory collat) = engine.marginAccounts(alice);
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 0);
+        assertEq(collat.length, 0);
+
+        (shorts, longs, collat) = engine.marginAccounts(address(this));
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 0);
+        assertEq(collat.length, 1);
+        assertEq(collat[0].amount, 100 * 1e6);
+    }
+
+    function testSettleLongPutOuterITM() public {
+        (,, Balance[] memory collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 0);
+
+        vm.warp(expiry);
+
+        oracle.setExpiryPrice(address(weth), address(usdc), 1650 * UNIT);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(alice, actions);
+        engine.execute(address(this), actions);
+
+        (,, collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 1);
+        assertEq(collat[0].amount, 100 * 1e6);
+
+        (,, collat) = engine.marginAccounts(address(this));
+        assertEq(collat.length, 0);
+    }
+
+    function testSettleLongPutInnerITM() public {
+        (,, Balance[] memory collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 0);
+
+        vm.warp(expiry);
+
+        oracle.setExpiryPrice(address(weth), address(usdc), 1750 * UNIT);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(alice, actions);
+        engine.execute(address(this), actions);
+
+        (,, collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 1);
+        assertEq(collat[0].amount, 50 * 1e6);
+
+        (,, collat) = engine.marginAccounts(address(this));
+        assertEq(collat.length, 1);
+        assertEq(collat[0].amount, 50 * 1e6);
+    }
+
+    function testSettleLongCallOuterITM() public {
+        (,, Balance[] memory collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 0);
+
+        vm.warp(expiry);
+
+        oracle.setExpiryPrice(address(weth), address(usdc), 2150 * UNIT);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(alice, actions);
+        engine.execute(address(this), actions);
+
+        (,, collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 1);
+        assertEq(collat[0].amount, 100 * 1e6);
+
+        (,, collat) = engine.marginAccounts(address(this));
+        assertEq(collat.length, 0);
+    }
+
+    function testSettleLongCallInnerITM() public {
+        (,, Balance[] memory collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 0);
+
+        vm.warp(expiry);
+
+        oracle.setExpiryPrice(address(weth), address(usdc), 2050 * UNIT);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(alice, actions);
+        engine.execute(address(this), actions);
+
+        (,, collat) = engine.marginAccounts(alice);
+        assertEq(collat.length, 1);
+        assertEq(collat[0].collateralId, usdcId);
+        assertEq(collat[0].amount, 50 * 1e6);
+
+        (,, collat) = engine.marginAccounts(address(this));
+        assertEq(collat.length, 1);
+        assertEq(collat[0].collateralId, usdcId);
+        assertEq(collat[0].amount, 50 * 1e6);
+    }
+}
