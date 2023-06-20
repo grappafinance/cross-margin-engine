@@ -6,4 +6,4 @@ array-lib=lib/array-lib/src
 pomace=lib/core-physical/src/
 grappa=lib/core-cash/src/
 grappa-test=lib/core-cash/test/
-pomace-test=lib/core-physical/test/
+pomace-test=lib/core-physical/src/test/

@@ -16,7 +16,7 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     uint8 constant PUT = uint8(0);
     uint8 constant CALL = uint8(1);
 
-    uint256 public expiry = block.timestamp + 1 days;
+    uint256 public expiry;
 
     struct OptionPosition {
         TokenType tokenType;
@@ -65,6 +65,10 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
 }
 
 contract PreviewCollateralReq_CMPM is PreviewCollateralReqBase_CMP {
+    function setUp() public {
+        expiry = block.timestamp + 14 days;
+    }
+
     function testMarginRequirement1() public {
         OptionPosition[] memory positions = new OptionPosition[](6);
         positions[0] = _optionPosition(CALL, 21000, -1);

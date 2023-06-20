@@ -354,46 +354,54 @@ library CrossMarginPhysicalMath {
         //  default value of 0 is not a valid productId so the first run will always set the cache
         uint32 lastUsedProductId;
 
-        unchecked {
-            for (uint256 i; i < positions.length; ++i) {
-                (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
+        for (uint256 i; i < positions.length;) {
+            (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
 
-                // skip expired positions
-                if (expiry < block.timestamp + exerciseWindow) continue;
-
-                // cache product detail if a productId differs from a previous iteration
-                if (productId != lastUsedProductId) {
-                    product = _getProductDetails(pomace, productId);
-
-                    lastUsedProductId = productId;
+            // skip expired long positions
+            if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
+                unchecked {
+                    ++i;
                 }
 
-                bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
+                continue;
+            }
 
-                (bool found, uint256 index) = BytesArrayUtil.indexOf(usceLookUp, pos);
+            // cache product detail if a productId differs from a previous iteration
+            if (productId != lastUsedProductId) {
+                product = _getProductDetails(pomace, productId);
 
-                CrossMarginDetail memory detail;
+                lastUsedProductId = productId;
+            }
 
-                if (found) {
-                    detail = details[index];
-                } else {
-                    usceLookUp = BytesArrayUtil.append(usceLookUp, pos);
+            bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
 
-                    detail.underlyingId = product.underlyingId;
-                    detail.underlyingDecimals = product.underlyingDecimals;
-                    detail.numeraireId = product.strikeId;
-                    detail.numeraireDecimals = product.strikeDecimals;
+            (bool found, uint256 index) = BytesArrayUtil.indexOf(usceLookUp, pos);
 
-                    detail.expiry = expiry;
+            CrossMarginDetail memory detail;
 
-                    details = details.append(detail);
-                }
+            if (found) {
+                detail = details[index];
+            } else {
+                usceLookUp = BytesArrayUtil.append(usceLookUp, pos);
 
-                int256 amount = int256(int64(positions[i].amount));
+                detail.underlyingId = product.underlyingId;
+                detail.underlyingDecimals = product.underlyingDecimals;
+                detail.numeraireId = product.strikeId;
+                detail.numeraireDecimals = product.strikeDecimals;
 
-                if (i < shortLength) amount = -amount;
+                detail.expiry = expiry;
 
-                _processDetailWithToken(detail, positions[i].tokenId, amount);
+                details = details.append(detail);
+            }
+
+            int256 amount = int256(int64(positions[i].amount));
+
+            if (i < shortLength) amount = -amount;
+
+            _processDetailWithToken(detail, positions[i].tokenId, amount);
+
+            unchecked {
+                ++i;
             }
         }
     }

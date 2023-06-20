@@ -360,9 +360,6 @@ library CrossMarginCashMath {
             for (uint256 i; i < positions.length; ++i) {
                 (, uint40 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
 
-                // skip expired positions
-                if (expiry < block.timestamp) continue;
-
                 // cache product detail if a productId differs from a previous iteration
                 if (productId != lastUsedProductId) {
                     product = _getProductDetails(grappa, productId);
