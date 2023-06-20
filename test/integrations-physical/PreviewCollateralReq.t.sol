@@ -53,11 +53,11 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     }
 
     function _callTokenId(uint256 _strikePrice) internal view returns (uint256 tokenId) {
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, _strikePrice, 0);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, _strikePrice, 30 minutes);
     }
 
     function _putTokenId(uint256 _strikePrice) internal view returns (uint256 tokenId) {
-        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, _strikePrice, 0);
+        tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, _strikePrice, 30 minutes);
     }
 
     // add a function prefixed with test here so forge coverage will ignore this file
@@ -65,6 +65,10 @@ contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
 }
 
 contract PreviewCollateralReq_CMPM is PreviewCollateralReqBase_CMP {
+    function setUp() public {
+        expiry = block.timestamp + 14 days;
+    }
+
     function testMarginRequirement1() public {
         OptionPosition[] memory positions = new OptionPosition[](6);
         positions[0] = _optionPosition(CALL, 21000, -1);

@@ -254,7 +254,7 @@ library CrossMarginPhysicalMath {
     /**
      * @notice calculates the amount of underlying is needed for call options
      * @dev only called if there are call options
-     * @param callWeights number of call options at a coorisponding strike
+     * @param callWeights number of call options at a corresponding strike
      * @return underlyingNeeded amount of underlying needed
      */
     function _getUnderlyingNeeded(int256[] memory callWeights) internal pure returns (uint256 underlyingNeeded) {
@@ -355,7 +355,16 @@ library CrossMarginPhysicalMath {
         uint32 lastUsedProductId;
 
         for (uint256 i; i < positions.length;) {
-            (, uint32 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
+            (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
+
+            // skip expired long positions
+            if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
+                unchecked {
+                    ++i;
+                }
+
+                continue;
+            }
 
             // cache product detail if a productId differs from a previous iteration
             if (productId != lastUsedProductId) {

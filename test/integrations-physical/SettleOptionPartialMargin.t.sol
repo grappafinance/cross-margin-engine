@@ -11,7 +11,7 @@ import "pomace/config/errors.sol";
 
 import "../../src/config/types.sol";
 
-import "pomace/test/mocks/MockERC20.sol";
+import "pomace-test/mocks/MockERC20.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {

@@ -59,6 +59,10 @@ contract PreviewCollateralReqBase_CMC is CrossMarginCashFixture {
 }
 
 contract PreviewCollateralReq_CMCM is PreviewCollateralReqBase_CMC {
+    function setUp() public {
+        expiry = block.timestamp + 14 days;
+    }
+
     function testMarginRequirement1() public {
         OptionPosition[] memory positions = new OptionPosition[](6);
         positions[0] = OptionPosition(TokenType.CALL, 21000 * UNIT, -1 * sUNIT);

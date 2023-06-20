@@ -12,7 +12,7 @@ import "pomace/config/errors.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
-import "pomace/test/mocks/MockERC20.sol";
+import "pomace-test/mocks/MockERC20.sol";
 
 contract General_CMP is CrossMarginPhysicalFixture {
     function setUp() public {
