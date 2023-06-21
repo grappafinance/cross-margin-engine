@@ -116,6 +116,8 @@ library CrossMarginPhysicalMath {
         pure
         returns (uint256 numeraireNeeded, uint256 underlyingNeeded)
     {
+        console2.log("entered get min collat");
+
         _verifyInputs(_detail);
 
         console2.log("get min collat");
@@ -149,6 +151,8 @@ library CrossMarginPhysicalMath {
      * @param _detail margin details
      */
     function _verifyInputs(CrossMarginDetail memory _detail) internal pure {
+        console2.log("entered verify inputs");
+
         if (_detail.callStrikes.length != _detail.callWeights.length) revert CMM_InvalidCallLengths();
         if (_detail.putStrikes.length != _detail.putWeights.length) revert CMM_InvalidPutLengths();
 
@@ -160,6 +164,7 @@ library CrossMarginPhysicalMath {
                 ++i;
             }
         }
+        console2.log("after put weights check");
 
         for (i = 0; i < _detail.callWeights.length;) {
             if (_detail.callWeights[i] == 0) revert CMM_InvalidCallWeight();
@@ -168,6 +173,7 @@ library CrossMarginPhysicalMath {
                 ++i;
             }
         }
+        console2.log("after call weights check");
     }
 
     /**
