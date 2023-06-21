@@ -8,7 +8,6 @@ import "pomace/config/constants.sol";
 import "../../src/config/errors.sol";
 
 import "../../src/config/types.sol";
-import "forge-std/console2.sol";
 
 /**
  * test full margin calculation for complicated structure
@@ -126,7 +125,6 @@ contract TestStructures_CMPM is Test {
 
     function testMarginRequirement2() public {
         callWeights[3] = -7 * sUNIT;
-        console2.log("entered, set call weights", callWeights[3]);
 
         CrossMarginDetail memory detail = CrossMarginDetail({
             putWeights: putWeights,
@@ -140,10 +138,7 @@ contract TestStructures_CMPM is Test {
             expiry: 0
         });
 
-        console2.log("set detail", callWeights[3]);
-
-        (uint256 numeraireNeeded, uint256 underlyingNeeded) = CrossMarginPhysicalMath.getMinCollateral(detail);
-        console2.log("get min collat", numeraireNeeded, underlyingNeeded);
+        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
 
         assertEq(numeraireNeeded, 28000 * UNIT);
         assertEq(underlyingNeeded, 0);

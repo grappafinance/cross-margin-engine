@@ -27,8 +27,6 @@ import "pomace/config/constants.sol";
 import "pomace/config/enums.sol";
 import "pomace/config/errors.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title   CrossMarginPhysicalMath
  * @notice  this library is in charge of calculating the min collateral for a given cross margin account
@@ -116,18 +114,11 @@ library CrossMarginPhysicalMath {
         pure
         returns (uint256 numeraireNeeded, uint256 underlyingNeeded)
     {
-        console2.log("entered get min collat");
-
         _verifyInputs(_detail);
 
-        console2.log("get min collat");
-
         (uint256[] memory scenarios, int256[] memory payouts) = _getScenariosAndPayouts(_detail);
-        console2.log("after get scenarios", scenarios.length, payouts.length);
 
         (numeraireNeeded, underlyingNeeded) = _getCollateralNeeds(_detail, scenarios, payouts);
-
-        console2.log("after get collat needs", numeraireNeeded, underlyingNeeded);
 
         // if options collateralized in underlying, forcing numeraire to be converted to underlying
         // only applied to calls since puts cannot be collateralized in underlying
@@ -135,15 +126,11 @@ library CrossMarginPhysicalMath {
             numeraireNeeded = 0;
 
             underlyingNeeded = _convertCallNumeraireToUnderlying(scenarios, payouts, underlyingNeeded);
-            console2.log("if true, ", numeraireNeeded, underlyingNeeded);
-
         } else {
             numeraireNeeded = NumberUtil.convertDecimals(numeraireNeeded, UNIT_DECIMALS, _detail.numeraireDecimals);
-            console2.log("if false, ", numeraireNeeded, underlyingNeeded);
         }
 
         underlyingNeeded = NumberUtil.convertDecimals(underlyingNeeded, UNIT_DECIMALS, _detail.underlyingDecimals);
-        console2.log("default, ", numeraireNeeded, underlyingNeeded);
     }
 
     /**
@@ -151,8 +138,6 @@ library CrossMarginPhysicalMath {
      * @param _detail margin details
      */
     function _verifyInputs(CrossMarginDetail memory _detail) internal pure {
-        console2.log("entered verify inputs");
-
         if (_detail.callStrikes.length != _detail.callWeights.length) revert CMM_InvalidCallLengths();
         if (_detail.putStrikes.length != _detail.putWeights.length) revert CMM_InvalidPutLengths();
 
@@ -164,7 +149,6 @@ library CrossMarginPhysicalMath {
                 ++i;
             }
         }
-        console2.log("after put weights check");
 
         for (i = 0; i < _detail.callWeights.length;) {
             if (_detail.callWeights[i] == 0) revert CMM_InvalidCallWeight();
@@ -173,7 +157,6 @@ library CrossMarginPhysicalMath {
                 ++i;
             }
         }
-        console2.log("after call weights check");
     }
 
     /**
