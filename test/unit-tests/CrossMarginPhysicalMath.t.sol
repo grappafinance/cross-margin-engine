@@ -142,7 +142,7 @@ contract TestStructures_CMPM is Test {
 
         console2.log("set detail", callWeights[3]);
 
-        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
+        (uint256 numeraireNeeded, uint256 underlyingNeeded) = CrossMarginPhysicalMath.getMinCollateral(detail);
         console2.log("get min collat", numeraireNeeded, underlyingNeeded);
 
         assertEq(numeraireNeeded, 28000 * UNIT);
