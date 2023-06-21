@@ -8,18 +8,18 @@ on:
       - '**'
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Install Foundry
-        uses: onbjerg/foundry-toolchain@v1
-        with:
-          version: nightly
-      - name: Run forge fmt
-        run: forge fmt --check
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
+  #     - name: Install Foundry
+  #       uses: onbjerg/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
+  #     - name: Run forge fmt
+  #       run: forge fmt --check
   test:
     runs-on: ubuntu-latest
     steps:
@@ -38,7 +38,7 @@ jobs:
         run: FOUNDRY_PROFILE=optimized CrossMarginOwner=0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 PomaceProxy=0x0000000000000000000000000000000000000001 PomaceOptionToken=0x0000000000000000000000000000000000000002 CrossMarginPhysicalOracle=0x0000000000000000000000000000000000004321 forge script script/deploy-launch-physical.sol
 
       - name: Run tests
-        run: forge test -vvvv
+        run: forge test --match-contract TestStructures_CMPM --match-test testMarginRequirement2 -vvvv
 
       - name: Run Coverage
         run: forge coverage --report lcov

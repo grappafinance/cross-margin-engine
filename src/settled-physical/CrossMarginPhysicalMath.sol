@@ -27,6 +27,8 @@ import "pomace/config/constants.sol";
 import "pomace/config/enums.sol";
 import "pomace/config/errors.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title   CrossMarginPhysicalMath
  * @notice  this library is in charge of calculating the min collateral for a given cross margin account
@@ -116,9 +118,14 @@ library CrossMarginPhysicalMath {
     {
         _verifyInputs(_detail);
 
+        console2.log("get min collat");
+
         (uint256[] memory scenarios, int256[] memory payouts) = _getScenariosAndPayouts(_detail);
+        console2.log("after get scenarios", scenarios.length, payouts.length);
 
         (numeraireNeeded, underlyingNeeded) = _getCollateralNeeds(_detail, scenarios, payouts);
+
+        console2.log("after get collat needs", numeraireNeeded, underlyingNeeded);
 
         // if options collateralized in underlying, forcing numeraire to be converted to underlying
         // only applied to calls since puts cannot be collateralized in underlying
@@ -126,11 +133,15 @@ library CrossMarginPhysicalMath {
             numeraireNeeded = 0;
 
             underlyingNeeded = _convertCallNumeraireToUnderlying(scenarios, payouts, underlyingNeeded);
+            console2.log("if true, ", numeraireNeeded, underlyingNeeded);
+
         } else {
             numeraireNeeded = NumberUtil.convertDecimals(numeraireNeeded, UNIT_DECIMALS, _detail.numeraireDecimals);
+            console2.log("if false, ", numeraireNeeded, underlyingNeeded);
         }
 
         underlyingNeeded = NumberUtil.convertDecimals(underlyingNeeded, UNIT_DECIMALS, _detail.underlyingDecimals);
+        console2.log("default, ", numeraireNeeded, underlyingNeeded);
     }
 
     /**
@@ -357,14 +368,14 @@ library CrossMarginPhysicalMath {
         for (uint256 i; i < positions.length;) {
             (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
 
-            // // skip expired long positions
-            // if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
-            //     unchecked {
-            //         ++i;
-            //     }
+            // skip expired long positions
+            if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
+                unchecked {
+                    ++i;
+                }
 
-            //     continue;
-            // }
+                continue;
+            }
 
             // cache product detail if a productId differs from a previous iteration
             if (productId != lastUsedProductId) {

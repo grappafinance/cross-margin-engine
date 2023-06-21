@@ -8,6 +8,7 @@ import "pomace/config/constants.sol";
 import "../../src/config/errors.sol";
 
 import "../../src/config/types.sol";
+import "forge-std/console2.sol";
 
 /**
  * test full margin calculation for complicated structure
@@ -79,6 +80,7 @@ contract TestStructures_CMPM is Test {
             numeraireDecimals: UNIT_DECIMALS,
             expiry: 0
         });
+
         vm.expectRevert(CMM_InvalidPutLengths.selector);
         detail.getMinCollateral();
     }
