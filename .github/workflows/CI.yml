@@ -27,10 +27,11 @@ jobs:
         with:
           submodules: recursive
       - name: Install Foundry
-        uses: onbjerg/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
+      - name: Output solidity version
+        run: solc --version
       - name: Run CASH deployment script
         run: FOUNDRY_PROFILE=optimized CrossMarginOwner=0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 GrappaProxy=0x0000000000000000000000000000000000000001 GrappaOptionToken=0x0000000000000000000000000000000000000002 CrossMarginCashOracle=0x0000000000000000000000000000000000001234 forge script script/deploy-launch-cash.sol
 
