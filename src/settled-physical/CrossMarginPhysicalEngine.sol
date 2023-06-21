@@ -406,7 +406,7 @@ contract CrossMarginPhysicalEngine is
         CrossMarginAccount memory account = accounts[_subAccount];
 
         // skip margin requirements check if no shorts
-        if (account.shorts.length == 0) return true;
+        // if (account.shorts.length == 0) return true;
 
         Balance[] memory collaterals = account.collaterals;
         Balance[] memory requirements = _getMinCollateral(account);

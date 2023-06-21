@@ -357,14 +357,14 @@ library CrossMarginPhysicalMath {
         for (uint256 i; i < positions.length;) {
             (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
 
-            // skip expired long positions
-            if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
-                unchecked {
-                    ++i;
-                }
+            // // skip expired long positions
+            // if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
+            //     unchecked {
+            //         ++i;
+            //     }
 
-                continue;
-            }
+            //     continue;
+            // }
 
             // cache product detail if a productId differs from a previous iteration
             if (productId != lastUsedProductId) {
