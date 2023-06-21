@@ -161,7 +161,7 @@ library CrossMarginPhysicalMath {
             }
         }
 
-        for (i; i < _detail.callWeights.length;) {
+        for (i = 0; i < _detail.callWeights.length;) {
             if (_detail.callWeights[i] == 0) revert CMM_InvalidCallWeight();
 
             unchecked {
