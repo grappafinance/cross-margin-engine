@@ -19,10 +19,10 @@
 	path = lib/array-lib
 	url = https://github.com/grappafinance/array-lib
 [submodule "lib/core-physical"]
-	# set to commit 135e363f on branch master
+	# set to commit c5da376a on branch master
 	path = lib/core-physical
 	url = https://github.com/grappafinance/core-physical
 [submodule "lib/core-cash"]
-	# set to commit 61da2f2e on branch master
+	# set to commit 8e67b0be on branch master
 	path = lib/core-cash
 	url = https://github.com/grappafinance/core-cash
