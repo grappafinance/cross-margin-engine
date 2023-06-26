@@ -79,6 +79,7 @@ contract TestStructures_CMPM is Test {
             numeraireDecimals: UNIT_DECIMALS,
             expiry: 0
         });
+
         vm.expectRevert(CMM_InvalidPutLengths.selector);
         detail.getMinCollateral();
     }
@@ -138,6 +139,7 @@ contract TestStructures_CMPM is Test {
         });
 
         (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
+
         assertEq(numeraireNeeded, 28000 * UNIT);
         assertEq(underlyingNeeded, 0);
     }

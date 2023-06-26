@@ -413,7 +413,6 @@ contract TestPMSettleLongStrangleSpreadCM is CrossMarginCashFixture {
         assertEq(collat.length, 1);
         assertEq(collat[0].amount, (depositAmount / 2) * amount / UNIT);
 
-
         (,, collat) = engine.marginAccounts(address(this));
         assertEq(collat.length, 1);
         assertEq(collat[0].amount, (depositAmount / 2) * amount / UNIT);
