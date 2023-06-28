@@ -635,6 +635,25 @@ contract TestExerciseLongPositions_CMP is CrossMarginPhysicalFixture {
         assertEq(collaterals[0].amount, usdcDepositAmount);
     }
 
+    function testCanClearLongPastExerciseWindow() public {
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, exerciseWindow);
+
+        _mintTokens(tokenId, usdcId, usdcDepositAmount);
+
+        vm.warp(expiry + exerciseWindow + 1);
+
+        // settle margin account
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createSettleAction();
+        engine.execute(address(this), actions);
+
+        //margin account should be reset
+        (, Position[] memory longs, Balance[] memory collaterals) = engine.marginAccounts(address(this));
+
+        assertEq(longs.length, 0);
+        assertEq(collaterals.length, 0);
+    }
+
     function _mintTokens(uint256 tokenId, uint8 collateralId, uint256 depositAmount) internal {
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(collateralId, alice, depositAmount);

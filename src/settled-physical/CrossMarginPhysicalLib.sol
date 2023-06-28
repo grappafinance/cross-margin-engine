@@ -251,5 +251,18 @@ library CrossMarginPhysicalLib {
                 }
             }
         }
+
+        // clean up worthless tokens
+        for (i = 0; i < account.longs.length;) {
+            (,, uint64 expiry,, uint64 exerciseWindow) = account.longs[i].tokenId.parseTokenId();
+
+            if (expiry + exerciseWindow < block.timestamp) {
+                account.longs.removeAt(i);
+            } else {
+                unchecked {
+                    ++i;
+                }
+            }
+        }
     }
 }
