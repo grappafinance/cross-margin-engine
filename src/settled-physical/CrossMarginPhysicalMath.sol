@@ -358,7 +358,7 @@ library CrossMarginPhysicalMath {
             (, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = positions[i].tokenId.parseTokenId();
 
             // skip expired long positions
-            if (i >= shortLength && expiry < block.timestamp + exerciseWindow) {
+            if (i >= shortLength && expiry + exerciseWindow < block.timestamp) {
                 unchecked {
                     ++i;
                 }
