@@ -51,5 +51,5 @@ jobs:
           env_vars: OS,PYTHON
           fail_ci_if_error: true
           files: ./lcov.info
-          name: grappa-coverage
+          name: cross-margin-engine-coverage
           verbose: true
