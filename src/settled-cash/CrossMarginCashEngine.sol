@@ -62,6 +62,10 @@ contract CrossMarginCashEngine is
 
     IOracle public immutable oracle;
 
+    uint256 internal immutable INITIAL_CHAIN_ID;
+
+    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
+
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
@@ -85,6 +89,10 @@ contract CrossMarginCashEngine is
     ///      assetId => assetId masks
     mapping(uint256 => uint256) private collateralizable;
 
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) private nonces;
+
     /*///////////////////////////////////////////////////////////////
                             Events
     //////////////////////////////////////////////////////////////*/
@@ -100,6 +108,9 @@ contract CrossMarginCashEngine is
         if (_oracle == address(0)) revert();
 
         oracle = IOracle(_oracle);
+
+        INITIAL_CHAIN_ID = block.chainid;
+        INITIAL_DOMAIN_SEPARATOR = _computeDomainSeparator();
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -280,6 +291,62 @@ contract CrossMarginCashEngine is
         account.longs = longs;
 
         return _getMinCollateral(account);
+    }
+
+    /**
+     * @notice  grant or revoke an account access to all your sub-accounts based on a signed message
+     * @dev     expected to have a valid signature signed with account private key
+     * @param   _account account which grants the access
+     * @param   _actor account that is authorized to access the margin account
+     * @param   _allowedExecutions how many times the account is authorized to update your accounts.
+     *          set to max(uint256) to allow permanent access
+     * @param   _v signature v
+     * @param   _r signature r
+     * @param   _s signature s
+     */
+    function setAccountAccess(address _account, address _actor, uint256 _allowedExecutions, uint8 _v, bytes32 _r, bytes32 _s)
+        external
+    {
+        unchecked {
+            address recoveredAddress = ecrecover(
+                keccak256(
+                    abi.encodePacked(
+                        "\x19\x01",
+                        DOMAIN_SEPARATOR(),
+                        keccak256(
+                            abi.encode(
+                                keccak256(
+                                    "SetAccountAccess(address account,address actor,address engine,uint256 allowedExecutions,uint256 nonce)"
+                                ),
+                                _account,
+                                _actor,
+                                address(this),
+                                _allowedExecutions,
+                                nonces[_account]++
+                            )
+                        )
+                    )
+                ),
+                _v,
+                _r,
+                _s
+            );
+
+            if (recoveredAddress == address(0) || recoveredAddress != _account) revert CM_InvalidSignature();
+        }
+
+        uint160 maskedId = uint160(_account) | 0xFF;
+        allowedExecutionLeft[maskedId][_actor] = _allowedExecutions;
+
+        emit AccountAuthorizationUpdate(maskedId, _actor, _allowedExecutions);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                Public Functions
+    //////////////////////////////////////////////////////////////*/
+
+    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : _computeDomainSeparator();
     }
 
     /**
@@ -512,5 +579,17 @@ contract CrossMarginCashEngine is
 
         uint256 mask = 1 << _assetId1;
         return collateralizable[_assetId0] & mask != 0;
+    }
+
+    function _computeDomainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("Cross Margin Cash Engine"),
+                keccak256("2"),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 }

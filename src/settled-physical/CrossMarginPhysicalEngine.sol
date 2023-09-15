@@ -60,6 +60,10 @@ contract CrossMarginPhysicalEngine is
     using SafeCast for int256;
     using TokenIdUtil for uint256;
 
+    uint256 internal immutable INITIAL_CHAIN_ID;
+
+    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
+
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
@@ -82,12 +86,19 @@ contract CrossMarginPhysicalEngine is
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
 
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) private nonces;
+
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {}
+    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {
+        INITIAL_CHAIN_ID = block.chainid;
+        INITIAL_DOMAIN_SEPARATOR = _computeDomainSeparator();
+    }
 
     /*///////////////////////////////////////////////////////////////
                             Initializer
@@ -291,6 +302,66 @@ contract CrossMarginPhysicalEngine is
         account.longs = longs;
 
         return _getMinCollateral(account);
+    }
+
+    /**
+     * @notice  grant or revoke an account access to all your sub-accounts based on a signed message
+     * @dev     expected to have a valid signature signed with account private key
+     * @param   _account account which grants the access
+     * @param   _actor account that is authorized to access the margin account
+     * @param   _allowedExecutions how many times the account is authorized to update your accounts.
+     *          set to max(uint256) to allow permanent access
+     * @param   _v signature v
+     * @param   _r signature r
+     * @param   _s signature s
+     */
+    function setAccountAccess(address _account, address _actor, uint256 _allowedExecutions, uint8 _v, bytes32 _r, bytes32 _s)
+        external
+    {
+        // assert valid signature
+        // Unchecked because the only math done is incrementing
+        // the owner's nonce which cannot realistically overflow.
+        unchecked {
+            address recoveredAddress = ecrecover(
+                keccak256(
+                    abi.encodePacked(
+                        "\x19\x01",
+                        DOMAIN_SEPARATOR(),
+                        keccak256(
+                            abi.encode(
+                                keccak256(
+                                    "SetAccountAccess(address account,address actor,address engine,uint256 allowedExecutions,uint256 nonce)"
+                                ),
+                                _account,
+                                _actor,
+                                address(this),
+                                _allowedExecutions,
+                                nonces[_account]++
+                            )
+                        )
+                    )
+                ),
+                _v,
+                _r,
+                _s
+            );
+
+            if (recoveredAddress == address(0) || recoveredAddress != _account) revert CM_InvalidSignature();
+        }
+
+        // update account access
+        uint160 maskedId = uint160(_account) | 0xFF;
+        allowedExecutionLeft[maskedId][_actor] = _allowedExecutions;
+
+        emit AccountAuthorizationUpdate(maskedId, _actor, _allowedExecutions);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                Public Functions
+    //////////////////////////////////////////////////////////////*/
+
+    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : _computeDomainSeparator();
     }
 
     /**
@@ -610,5 +681,17 @@ contract CrossMarginPhysicalEngine is
         else balances[index].amount += balance;
 
         return balances;
+    }
+
+    function _computeDomainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("Cross Margin Physical Engine"),
+                keccak256("1"),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 }

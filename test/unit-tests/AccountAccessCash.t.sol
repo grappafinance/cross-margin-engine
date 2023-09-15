@@ -74,3 +74,175 @@ contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
         engine.execute(subAccountId, actions);
     }
 }
+
+contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
+    bytes32 constant ACCOUNT_ACCESS_TYPEHASH =
+        keccak256("SetAccountAccess(address account,address actor,address engine,uint256 allowedExecutions,uint256 nonce)");
+
+    address private account;
+    uint256 private privateKey = 0xBEEF;
+
+    event AccountAuthorizationUpdate(uint160 maskId, address account, uint256 updatesAllowed);
+
+    constructor() CrossMarginCashFixture() {
+        account = vm.addr(privateKey);
+
+        usdc.mint(address(this), 1000_000 * 1e6);
+        usdc.approve(address(engine), type(uint256).max);
+
+        // assert that no access is granted
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(usdcId, address(this), 100 * 1e6);
+
+        vm.expectRevert(NoAccess.selector);
+        engine.execute(account, actions);
+
+        // assert that allowedExecutionLeft is 0
+        assertEq(engine.allowedExecutionLeft(uint160(account) | 0xFF, address(this)), 0);
+    }
+
+    function testCanSetAccess() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                )
+            )
+        );
+
+        uint160 maskedId = uint160(account) | 0xFF;
+
+        vm.expectEmit(true, true, true, true);
+        emit AccountAuthorizationUpdate(maskedId, address(this), type(uint256).max);
+
+        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        assertEq(engine.allowedExecutionLeft(maskedId, address(this)), type(uint256).max);
+
+        // we can update the account now
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(usdcId, address(this), 100 * 1e6);
+
+        engine.execute(account, actions);
+    }
+
+    function testRevertsOnNoSignature() public {
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, address(this), type(uint256).max, 0, bytes32(""), bytes32(""));
+    }
+
+    function testRevertsOnInvalidPrivateKey() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            0xCAFE,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnInvalidNonce() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 1))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnInvalidActor() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, alice, type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnInvalidAccount() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, alice, address(this), address(engine), type(uint256).max, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(alice, address(this), type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnMismatchingAccount() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(alice, address(this), type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnInvalidExecutionsNum() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), 10, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+    }
+
+    function testRevertsOnInvalidEngine() public {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(0x1111), type(uint256).max, 0))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+    }
+}
