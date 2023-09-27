@@ -77,7 +77,7 @@ contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
 
 contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
     bytes32 constant ACCOUNT_ACCESS_TYPEHASH =
-        keccak256("SetAccountAccess(address account,address actor,address engine,uint256 allowedExecutions,uint256 nonce)");
+        keccak256("PermitAccountAccess(address subAccount,address actor,uint256 allowedExecutions,uint256 nonce)");
 
     address private account;
     uint256 private privateKey = 0xBEEF;
@@ -108,7 +108,7 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 0))
                 )
             )
         );
@@ -118,7 +118,7 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
         vm.expectEmit(true, true, true, true);
         emit AccountAuthorizationUpdate(maskedId, address(this), type(uint256).max);
 
-        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
 
         assertEq(engine.allowedExecutionLeft(maskedId, address(this)), type(uint256).max);
 
@@ -129,9 +129,59 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
         engine.execute(account, actions);
     }
 
+    function testCanSetAccessToZero() public {
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+
+        (v, r, s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 0))
+                )
+            )
+        );
+
+        uint160 maskedId = uint160(account) | 0xFF;
+
+        vm.expectEmit(true, true, true, true);
+        emit AccountAuthorizationUpdate(maskedId, address(this), type(uint256).max);
+
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        assertEq(engine.allowedExecutionLeft(maskedId, address(this)), type(uint256).max);
+
+        // we can update the account now
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(usdcId, address(this), 100 * 1e6);
+
+        engine.execute(account, actions);
+
+        (v, r, s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), 0, 1))
+                )
+            )
+        );
+
+        vm.expectEmit(true, true, true, true);
+        emit AccountAuthorizationUpdate(maskedId, address(this), 0);
+
+        engine.permitAccountAccess(account, address(this), 0, v, r, s);
+
+        assertEq(engine.allowedExecutionLeft(maskedId, address(this)), 0);
+    }
+
     function testRevertsOnNoSignature() public {
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, address(this), type(uint256).max, 0, bytes32(""), bytes32(""));
+        engine.permitAccountAccess(account, address(this), type(uint256).max, 0, bytes32(""), bytes32(""));
     }
 
     function testRevertsOnInvalidPrivateKey() public {
@@ -141,13 +191,13 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 0))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
     }
 
     function testRevertsOnInvalidNonce() public {
@@ -157,13 +207,13 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 1))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 1))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
     }
 
     function testRevertsOnInvalidActor() public {
@@ -173,13 +223,13 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 0))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, alice, type(uint256).max, v, r, s);
+        engine.permitAccountAccess(account, alice, type(uint256).max, v, r, s);
     }
 
     function testRevertsOnInvalidAccount() public {
@@ -189,13 +239,13 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, alice, address(this), address(engine), type(uint256).max, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, alice, address(this), type(uint256).max, 0))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(alice, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(alice, address(this), type(uint256).max, v, r, s);
     }
 
     function testRevertsOnMismatchingAccount() public {
@@ -205,13 +255,13 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), type(uint256).max, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), type(uint256).max, 0))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(alice, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(alice, address(this), type(uint256).max, v, r, s);
     }
 
     function testRevertsOnInvalidExecutionsNum() public {
@@ -221,28 +271,12 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
                 abi.encodePacked(
                     "\x19\x01",
                     engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(engine), 10, 0))
+                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), 10, 0))
                 )
             )
         );
 
         vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
-    }
-
-    function testRevertsOnInvalidEngine() public {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    engine.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(ACCOUNT_ACCESS_TYPEHASH, account, address(this), address(0x1111), type(uint256).max, 0))
-                )
-            )
-        );
-
-        vm.expectRevert(CM_InvalidSignature.selector);
-        engine.setAccountAccess(account, address(this), type(uint256).max, v, r, s);
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
     }
 }

@@ -19,7 +19,7 @@
 	path = lib/array-lib
 	url = https://github.com/grappafinance/array-lib
 [submodule "lib/core-physical"]
-	# set to commit 59402e19 on branch master
+	# set to commit cf67e9a on branch feature/show-debt-and-payout
 	path = lib/core-physical
 	url = https://github.com/grappafinance/core-physical
 [submodule "lib/core-cash"]
