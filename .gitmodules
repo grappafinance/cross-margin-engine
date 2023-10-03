@@ -23,6 +23,6 @@
 	path = lib/core-physical
 	url = https://github.com/grappafinance/core-physical
 [submodule "lib/core-cash"]
-	# set to commit 8e67b0be on branch master
+	# set to commit 1d18f288 on branch master
 	path = lib/core-cash
 	url = https://github.com/grappafinance/core-cash
