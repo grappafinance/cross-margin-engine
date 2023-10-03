@@ -20,7 +20,7 @@ import {IWhitelist} from "../interfaces/IWhitelist.sol";
 import {BalanceUtil} from "grappa/libraries/BalanceUtil.sol";
 import {ProductIdUtil} from "grappa/libraries/ProductIdUtil.sol";
 import {TokenIdUtil} from "grappa/libraries/TokenIdUtil.sol";
-import {UintArrayLib} from "array-lib/UintArrayLib.sol";
+import {IntArrayLib} from "array-lib/IntArrayLib.sol";
 
 // Cross margin libraries
 import {AccountUtil} from "../libraries/AccountUtil.sol";
@@ -294,7 +294,7 @@ contract CrossMarginCashEngine is
     function previewCollateralAvailable(Position[] memory shorts, Position[] memory longs, Balance[] memory collaterals)
         external
         view
-        returns (address[] memory, uint256[] memory, bool)
+        returns (address[] memory, int256[] memory, bool)
     {
         CrossMarginAccount memory account;
 
@@ -387,24 +387,24 @@ contract CrossMarginCashEngine is
     function _getCollateralAvailable(CrossMarginAccount memory account)
         internal
         view
-        returns (address[] memory addresses, uint256[] memory amounts, bool isUnderWater)
+        returns (address[] memory addresses, int256[] memory amounts, bool isUnderWater)
     {
         Balance[] memory collaterals = account.collaterals;
         Balance[] memory requirements = _getMinCollateral(account);
 
         uint256 collatCount = collaterals.length;
 
-        uint256[] memory masks;
-        amounts = new uint256[](collatCount);
+        int256[] memory masks;
+        amounts = new int256[](collatCount);
         addresses = new address[](collatCount);
 
         unchecked {
             for (uint256 x; x < requirements.length; ++x) {
                 uint8 reqCollatId = requirements[x].collateralId;
                 (address reqCollatAddr,) = grappa.assets(reqCollatId);
-                uint256 reqAmount = requirements[x].amount;
+                int256 reqAmount = int256(uint256(requirements[x].amount));
 
-                masks = new uint256[](collatCount);
+                masks = new int256[](collatCount);
                 uint256 y;
 
                 for (y; y < collatCount; ++y) {
@@ -413,23 +413,23 @@ contract CrossMarginCashEngine is
                     // only setting amount and address on first pass
                     // dont need to repeat each inner loop
                     if (x == 0) {
-                        amounts[y] = collaterals[y].amount;
+                        amounts[y] = int256(uint256(collaterals[y].amount));
 
                         (address addr,) = grappa.assets(collatId);
                         addresses[y] = addr;
                     }
 
                     if (reqCollatId == collatId) {
-                        masks[y] = 1 * UNIT;
+                        masks[y] = int256(1 * UNIT);
                     } else {
                         // setting mask to price if reqCollateralId is collateralId
                         if (_isCollateralizable(reqCollatId, collatId)) {
-                            masks[y] = oracle.getSpotPrice(addresses[y], reqCollatAddr);
+                            masks[y] = int256(oracle.getSpotPrice(addresses[y], reqCollatAddr));
                         }
                     }
                 }
 
-                uint256 marginValue = UintArrayLib.dot(amounts, masks) / UNIT;
+                int256 marginValue = IntArrayLib.dot(amounts, masks) / int256(UNIT);
 
                 // not enough collateral posted
                 if (marginValue < reqAmount) isUnderWater = true;
@@ -438,11 +438,12 @@ contract CrossMarginCashEngine is
                 for (y = 0; y < collatCount; ++y) {
                     if (masks[y] == 0) continue;
 
-                    marginValue = amounts[y] * masks[y] / UNIT;
+                    marginValue = amounts[y] * masks[y] / int256(UNIT);
 
                     if (reqAmount >= marginValue) {
                         reqAmount = reqAmount - marginValue;
-                        amounts[y] = 0;
+                        // flip the sign to display the amount of collateral that is missing
+                        amounts[y] = -reqAmount;
 
                         if (reqAmount == 0) break;
                     } else {

@@ -17,7 +17,7 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         Position[] memory shorts = new Position[](0);
         Balance[] memory collaterals = new Balance[](0);
 
-        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+        (address[] memory addresses, int256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 0);
@@ -42,7 +42,7 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         shorts[0] = Position({tokenId: putTokenId, amount: uint64(1 * UNIT)});
         shorts[1] = Position({tokenId: callTokenId, amount: uint64(1 * UNIT)});
 
-        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+        (address[] memory addresses, int256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 2);
@@ -50,8 +50,8 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         assertEq(addresses[1], address(weth));
 
         assertEq(amounts.length, 2);
-        assertEq(amounts[0], 0);
-        assertEq(amounts[1], 0);
+        assertEq(amounts[0], int256(0));
+        assertEq(amounts[1], int256(0));
 
         assertEq(isUnderWater, false);
     }
@@ -73,7 +73,7 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         shorts[0] = Position({tokenId: putTokenId, amount: uint64(1 * UNIT)});
         shorts[1] = Position({tokenId: callTokenId, amount: uint64(1 * UNIT)});
 
-        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+        (address[] memory addresses, int256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 2);
@@ -81,8 +81,8 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         assertEq(addresses[1], address(weth));
 
         assertEq(amounts.length, 2);
-        assertEq(amounts[0], usdcStrikePrice);
-        assertEq(amounts[1], wethStrikePrice);
+        assertEq(amounts[0], int256(uint256(usdcStrikePrice)));
+        assertEq(amounts[1], int256(uint256(wethStrikePrice)));
 
         assertEq(isUnderWater, false);
     }
@@ -98,14 +98,14 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         Position[] memory shorts = new Position[](1);
         shorts[0] = Position({tokenId: tokenId, amount: uint64(2 * UNIT)});
 
-        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+        (address[] memory addresses, int256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 1);
         assertEq(addresses[0], address(usdc));
 
         assertEq(amounts.length, 1);
-        assertEq(amounts[0], 0);
+        assertEq(amounts[0], -int256(uint256(usdcStrikePrice)));
 
         assertEq(isUnderWater, true);
     }
@@ -118,7 +118,7 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         Position[] memory longs = new Position[](0);
         Position[] memory shorts = new Position[](0);
 
-        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+        (address[] memory addresses, int256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 2);
@@ -126,8 +126,8 @@ contract TestPreviewCollateralAvailable_CMC is CrossMarginCashFixture {
         assertEq(addresses[1], address(0));
 
         assertEq(amounts.length, 2);
-        assertEq(amounts[0], 0);
-        assertEq(amounts[1], 0);
+        assertEq(amounts[0], int256(0));
+        assertEq(amounts[1], int256(0));
 
         assertEq(isUnderWater, false);
     }
