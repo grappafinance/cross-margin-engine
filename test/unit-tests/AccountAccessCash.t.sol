@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/Test.sol";
+
 // import test base and helpers.
 import {CrossMarginCashFixture} from "../integrations-cash/CrossMarginCashFixture.t.sol";
 
@@ -76,6 +78,8 @@ contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
 }
 
 contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
+    using stdStorage for StdStorage;
+
     bytes32 constant ACCOUNT_ACCESS_TYPEHASH =
         keccak256("PermitAccountAccess(address subAccount,address actor,uint256 allowedExecutions,uint256 nonce)");
 
@@ -99,6 +103,22 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
 
         // assert that allowedExecutionLeft is 0
         assertEq(engine.allowedExecutionLeft(uint160(account) | 0xFF, address(this)), 0);
+    }
+
+    function testCannotSetDomainSeperator() public {
+        vm.expectRevert();
+        engine.setDomainSeperator();
+    }
+
+    function testCanSetDomainSeperator() public {
+        bytes32 expected = engine.initialDomainSeparator();
+
+        uint256 slot = stdstore.target(address(engine)).sig("initialDomainSeparator()").find();
+        vm.store(address(engine), bytes32(slot), bytes32(0));
+
+        engine.setDomainSeperator();
+
+        assert(engine.initialDomainSeparator() == expected);
     }
 
     function testCanSetAccess() public {

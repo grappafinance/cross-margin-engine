@@ -64,6 +64,10 @@ contract CrossMarginCashEngine is
                             Immutables
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev initial chain id used in domain separator
+    uint256 public immutable initialChainId;
+
+    /// @dev oracle to handle partial margining
     IOracle public immutable oracle;
 
     /*///////////////////////////////////////////////////////////////
@@ -89,15 +93,16 @@ contract CrossMarginCashEngine is
     ///      assetId => assetId masks
     mapping(uint256 => uint256) private collateralizable;
 
-    /// @dev nonce for signed messages to prevent replay attacks
-    ///      address => nonce
-    mapping(address => uint256) private nonces;
-
-    /// @dev initial chain id used in domain separator calculations
-    uint256 private initialChainId;
+    /*///////////////////////////////////////////////////////////////
+                         State Variables V3
+    //////////////////////////////////////////////////////////////*/
 
     /// @dev initial cached domain separator
-    bytes32 private initialDomainSeparator;
+    bytes32 public initialDomainSeparator;
+
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) public nonces;
 
     /*///////////////////////////////////////////////////////////////
                             Events
@@ -113,6 +118,7 @@ contract CrossMarginCashEngine is
         // solhint-disable-next-line reason-string
         if (_oracle == address(0)) revert();
 
+        initialChainId = block.chainid;
         oracle = IOracle(_oracle);
     }
 
@@ -127,7 +133,6 @@ contract CrossMarginCashEngine is
         _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
 
-        initialChainId = block.chainid;
         initialDomainSeparator = _computeDomainSeparator();
     }
 
@@ -146,6 +151,12 @@ contract CrossMarginCashEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+
+    function setDomainSeperator() external {
+        if (initialDomainSeparator != bytes32(0)) revert();
+
+        initialDomainSeparator = _computeDomainSeparator();
+    }
 
     /**
      * @notice Sets the whitelist contract

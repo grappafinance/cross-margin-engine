@@ -61,6 +61,13 @@ contract CrossMarginPhysicalEngine is
     using TokenIdUtil for uint256;
 
     /*///////////////////////////////////////////////////////////////
+                            Immutables
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev initial chain id used in domain separator
+    uint256 public immutable initialChainId;
+
+    /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
 
@@ -78,22 +85,25 @@ contract CrossMarginPhysicalEngine is
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
 
-    /// @dev nonce for signed messages to prevent replay attacks
-    ///      address => nonce
-    mapping(address => uint256) private nonces;
-
-    /// @dev initial chain id used in domain separator calculations
-    uint256 private initialChainId;
+    /*///////////////////////////////////////////////////////////////
+                         State Variables V3
+    //////////////////////////////////////////////////////////////*/
 
     /// @dev initial cached domain separator
-    bytes32 private initialDomainSeparator;
+    bytes32 public initialDomainSeparator;
+
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) public nonces;
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {}
+    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {
+        initialChainId = block.chainid;
+    }
 
     /*///////////////////////////////////////////////////////////////
                             Initializer
@@ -106,7 +116,6 @@ contract CrossMarginPhysicalEngine is
         _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
 
-        initialChainId = block.chainid;
         initialDomainSeparator = _computeDomainSeparator();
     }
 
@@ -125,6 +134,12 @@ contract CrossMarginPhysicalEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+
+    function setDomainSeperator() external {
+        if (initialDomainSeparator != bytes32(0)) revert();
+
+        initialDomainSeparator = _computeDomainSeparator();
+    }
 
     /**
      * @notice Sets the whitelist contract
