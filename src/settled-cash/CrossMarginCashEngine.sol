@@ -8,8 +8,8 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // inheriting contracts
-import {OptionTransferable} from "grappa/core/engines/mixins/OptionTransferable.sol";
 import {BaseEngine} from "grappa/core/engines/BaseEngine.sol";
+import {AccountCashEngine} from "./AccountCashEngine.sol";
 
 // interfaces
 import {IMarginEngine} from "grappa/interfaces/IMarginEngine.sol";
@@ -26,6 +26,8 @@ import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 import {AccountUtil} from "../libraries/AccountUtil.sol";
 import {CrossMarginCashMath} from "./CrossMarginCashMath.sol";
 import {CrossMarginCashLib} from "./CrossMarginCashLib.sol";
+
+
 
 // Cross margin types
 import "./types.sol";
@@ -46,7 +48,7 @@ import "grappa/config/errors.sol";
  *             Interacts with grappa to fetch registered asset info
  */
 contract CrossMarginCashEngine is
-    OptionTransferable,
+    AccountCashEngine,
     IMarginEngine,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
