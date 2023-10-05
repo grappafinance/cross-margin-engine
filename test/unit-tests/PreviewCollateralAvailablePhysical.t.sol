@@ -136,13 +136,15 @@ contract TestPreviewCollateralAvailable_CMP is CrossMarginPhysicalFixture {
 
 contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
     MockERC20 internal lsEth;
-    MockERC20 internal sdyc;
+    MockERC20 internal usyc;
+    MockERC20 internal usdt;
 
     uint8 internal lsEthId;
-    uint8 internal sdycId;
+    uint8 internal usycId;
+    uint8 internal usdtId;
 
     uint32 internal pidLsEthCollat;
-    uint32 internal pidSdycCollat;
+    uint32 internal pidUsycCollat;
 
     uint256 public expiry;
 
@@ -150,28 +152,35 @@ contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
         lsEth = new MockERC20("LsETH", "LsETH", 18);
         vm.label(address(lsEth), "LsETH");
 
-        sdyc = new MockERC20("SDYC", "SDYC", 6);
-        vm.label(address(sdyc), "SDYC");
+        usyc = new MockERC20("USYC", "USYC", 6);
+        vm.label(address(usyc), "USYC");
+
+        usdt = new MockERC20("USDT", "USDT", 6);
+        vm.label(address(usdt), "USDT");
 
         lsEthId = pomace.registerAsset(address(lsEth));
-        sdycId = pomace.registerAsset(address(sdyc));
+        usycId = pomace.registerAsset(address(usyc));
+        usdtId = pomace.registerAsset(address(usdt));
 
         pomace.setCollateralizable(address(weth), address(lsEth), true);
-        pomace.setCollateralizable(address(usdc), address(sdyc), true);
+        pomace.setCollateralizable(address(usdc), address(usyc), true);
+        pomace.setCollateralizable(address(usdc), address(usdt), true);
+        pomace.setCollateralizable(address(usdt), address(usyc), true);
 
         pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
-        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
+        pidUsycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(usyc));
 
         lsEth.mint(address(this), 100 * 1e18);
         lsEth.approve(address(engine), type(uint256).max);
 
-        sdyc.mint(address(this), 1000_000 * 1e6);
-        sdyc.approve(address(engine), type(uint256).max);
+        usyc.mint(address(this), 1000_000 * 1e6);
+        usyc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
 
         oracle.setSpotPrice(address(lsEth), 3000 * UNIT);
-        oracle.setSpotPrice(address(sdyc), 1 * UNIT);
+        oracle.setSpotPrice(address(usyc), 1 * UNIT);
+        oracle.setSpotPrice(address(usdt), 1 * UNIT);
     }
 
     function testPreviewCollateralEqualShortLong() public {
@@ -267,28 +276,28 @@ contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 2000 * 1e6;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 30 minutes);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsycCollat, expiry, strikePrice, 30 minutes);
 
         Position[] memory longs = new Position[](0);
         Position[] memory shorts = new Position[](1);
         Balance[] memory collaterals = new Balance[](1);
 
-        collaterals[0] = Balance({collateralId: sdycId, amount: uint80(depositAmount)});
+        collaterals[0] = Balance({collateralId: usycId, amount: uint80(depositAmount)});
         shorts[0] = Position({tokenId: tokenId, amount: uint64(amount)});
 
         // uint256 wethExpiryPrice = 1000 * UNIT;
-        uint256 newSdycPrice = 1_040000; // worth more due to interest ($1.04)
+        uint256 newUsycPrice = 1_040000; // worth more due to interest ($1.04)
 
         // oracle.setSpotPrice(address(weth), wethExpiryPrice);
-        oracle.setSpotPrice(address(sdyc), newSdycPrice);
+        oracle.setSpotPrice(address(usyc), newUsycPrice);
 
         (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
             engine.previewCollateralAvailable(shorts, longs, collaterals);
 
         assertEq(addresses.length, 1);
-        assertEq(addresses[0], address(sdyc));
+        assertEq(addresses[0], address(usyc));
         assertEq(amounts.length, 1);
-        assertEq(amounts[0], depositAmount - strikePrice * UNIT / newSdycPrice);
+        assertEq(amounts[0], depositAmount - strikePrice * UNIT / newUsycPrice);
         assertEq(isUnderWater, false);
     }
 
@@ -316,5 +325,98 @@ contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
         assertEq(addresses[0], address(lsEth));
         assertEq(amounts.length, 1);
         assertEq(amounts[0], depositAmount - depositAmount * UNIT / newLsEthPrice);
+    }
+
+    function testPreviewWithHigherValueCollatPut() public {
+        oracle.setSpotPrice(address(usyc), 1.25 * 1e6);
+
+        uint256 depositAmount = 1600 * 1e6;
+
+        uint256 strikePrice = 2000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsycCollat, expiry, strikePrice, 0);
+
+        Position[] memory longs = new Position[](0);
+        Position[] memory shorts = new Position[](1);
+        Balance[] memory collaterals = new Balance[](1);
+
+        collaterals[0] = Balance({collateralId: usycId, amount: uint80(depositAmount)});
+        shorts[0] = Position({tokenId: tokenId, amount: uint64(amount)});
+
+        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+            engine.previewCollateralAvailable(shorts, longs, collaterals);
+
+        assertEq(addresses.length, 1);
+        assertEq(addresses[0], address(usyc));
+        assertEq(amounts.length, 1);
+        assertEq(amounts[0], 0);
+        assertEq(isUnderWater, false);
+    }
+
+    function testPreviewWithHigherValueCollatCall() public {
+        oracle.setSpotPrice(address(lsEth), 1.25 * 1e6);
+
+        uint256 depositAmount = 0.8 * 1e18;
+
+        uint256 strikePrice = 4000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
+
+        Position[] memory longs = new Position[](0);
+        Position[] memory shorts = new Position[](1);
+        Balance[] memory collaterals = new Balance[](1);
+
+        collaterals[0] = Balance({collateralId: lsEthId, amount: uint80(depositAmount)});
+        shorts[0] = Position({tokenId: tokenId, amount: uint64(amount)});
+
+        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+            engine.previewCollateralAvailable(shorts, longs, collaterals);
+
+        assertEq(addresses.length, 1);
+        assertEq(addresses[0], address(lsEth));
+        assertEq(amounts.length, 1);
+        assertEq(amounts[0], 0);
+        assertEq(isUnderWater, false);
+    }
+
+    function testPreviewMixedBagWithVariableValueCollateral() public {
+        oracle.setSpotPrice(address(usdt), 0.96 * 1e6);
+        oracle.setSpotPrice(address(usyc), 1.25 * 1e6);
+        oracle.setSpotPrice(address(lsEth), 1.6 * 1e6);
+
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, 0);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsycCollat, expiry, 2000 * UNIT, 0);
+        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, 0);
+
+        Position[] memory longs = new Position[](0);
+        Position[] memory shorts = new Position[](3);
+        Balance[] memory collaterals = new Balance[](3);
+
+        collaterals[0] = Balance({collateralId: usdtId, amount: uint80(1875 * 1e6)});
+        collaterals[1] = Balance({collateralId: usycId, amount: uint80(960 * 1e6)});
+        collaterals[2] = Balance({collateralId: lsEthId, amount: uint80(0.625 * 1e18)});
+
+        shorts[0] = Position({tokenId: tokenId1, amount: uint64(amount)});
+        shorts[1] = Position({tokenId: tokenId2, amount: uint64(amount)});
+        shorts[2] = Position({tokenId: tokenId3, amount: uint64(amount)});
+
+        (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
+            engine.previewCollateralAvailable(shorts, longs, collaterals);
+
+        assertEq(addresses.length, 3);
+        assertEq(addresses[0], address(usdt));
+        assertEq(addresses[1], address(usyc));
+        assertEq(addresses[2], address(lsEth));
+
+        assertEq(amounts.length, 3);
+        assertEq(amounts[0], 0);
+        assertEq(amounts[1], 0);
+        assertEq(amounts[2], 0);
+
+        assertEq(isUnderWater, false);
     }
 }
