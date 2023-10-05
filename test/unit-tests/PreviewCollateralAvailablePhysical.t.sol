@@ -285,10 +285,8 @@ contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
         collaterals[0] = Balance({collateralId: usycId, amount: uint80(depositAmount)});
         shorts[0] = Position({tokenId: tokenId, amount: uint64(amount)});
 
-        // uint256 wethExpiryPrice = 1000 * UNIT;
         uint256 newUsycPrice = 1_040000; // worth more due to interest ($1.04)
 
-        // oracle.setSpotPrice(address(weth), wethExpiryPrice);
         oracle.setSpotPrice(address(usyc), newUsycPrice);
 
         (address[] memory addresses, uint256[] memory amounts, bool isUnderWater) =
