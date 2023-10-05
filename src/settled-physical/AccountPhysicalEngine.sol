@@ -102,7 +102,6 @@ abstract contract AccountPhysicalEngine is BaseEngine {
      */
     function _burnOptionFromAccount(address _subAccount, bytes calldata _data) internal virtual {
         // decode parameters
-        // decode parameters
         (uint256 tokenId, address from, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
 
         // token being burn must come from caller or the primary account for this subAccount
@@ -110,6 +109,8 @@ abstract contract AccountPhysicalEngine is BaseEngine {
 
         // update the account in state
         _decreaseLongInAccount(from, tokenId, amount);
+
+        emit PhysicalOptionTokenBurned(from, tokenId, amount);
 
         // update the account in state
         _decreaseShortInAccount(_subAccount, tokenId, amount);

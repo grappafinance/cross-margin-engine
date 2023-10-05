@@ -27,8 +27,6 @@ import {AccountUtil} from "../libraries/AccountUtil.sol";
 import {CrossMarginCashMath} from "./CrossMarginCashMath.sol";
 import {CrossMarginCashLib} from "./CrossMarginCashLib.sol";
 
-
-
 // Cross margin types
 import "./types.sol";
 import "../config/errors.sol";
