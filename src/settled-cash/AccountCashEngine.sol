@@ -102,7 +102,6 @@ abstract contract AccountCashEngine is BaseEngine {
      */
     function _burnOptionFromAccount(address _subAccount, bytes calldata _data) internal virtual {
         // decode parameters
-        // decode parameters
         (uint256 tokenId, address from, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
 
         // token being burn must come from caller or the primary account for this subAccount
