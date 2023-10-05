@@ -533,6 +533,8 @@ contract CrossMarginPhysicalEngine is
                 _mintOptionIntoAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.BurnShort) {
                 _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferLong) {
                 _transferLong(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferShort) {

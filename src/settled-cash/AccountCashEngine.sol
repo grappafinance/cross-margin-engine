@@ -111,6 +111,8 @@ abstract contract AccountCashEngine is BaseEngine {
         // update the account in state
         _decreaseLongInAccount(from, tokenId, amount);
 
+        emit CashOptionTokenBurned(from, tokenId, amount);
+
         // update the account in state
         _decreaseShortInAccount(_subAccount, tokenId, amount);
 
