@@ -8,9 +8,6 @@ pragma solidity ^0.8.0;
 /// @dev cross margin doesn't support this action
 error CM_UnsupportedAction();
 
-/// @dev cannot override a non-empty subaccount id
-error CM_AccountIsNotEmpty();
-
 /// @dev unsupported token type
 error CM_UnsupportedTokenType();
 
