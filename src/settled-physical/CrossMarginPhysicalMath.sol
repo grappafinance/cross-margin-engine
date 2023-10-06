@@ -24,7 +24,7 @@ import "../config/errors.sol";
 
 import {ProductDetails} from "pomace/config/types.sol";
 import "pomace/config/constants.sol";
-import "pomace/config/enums.sol";
+import {TokenType} from "pomace/config/enums.sol";
 import "pomace/config/errors.sol";
 
 /**

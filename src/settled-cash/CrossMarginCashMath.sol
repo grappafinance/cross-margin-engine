@@ -25,9 +25,11 @@ import "./types.sol";
 import "../config/errors.sol";
 
 import {ProductDetails} from "grappa/config/types.sol";
+import "../config/enums.sol";
+
 import "grappa/config/constants.sol";
-import "grappa/config/enums.sol";
 import "grappa/config/errors.sol";
+import {TokenType} from "grappa/config/enums.sol";
 
 /**
  * @title   CrossMarginCashMath

@@ -9,6 +9,8 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
+import "../../src/config/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestAddCollateral_CMP is CrossMarginPhysicalFixture {
     function setUp() public {

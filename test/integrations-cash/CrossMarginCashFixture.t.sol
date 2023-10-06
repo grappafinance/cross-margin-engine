@@ -7,7 +7,7 @@ import {CrossMarginCashEngine} from "../../src/settled-cash/CrossMarginCashEngin
 import "../../src/settled-cash/CrossMarginCashEngineProxy.sol";
 import {Grappa} from "grappa/core/Grappa.sol";
 import "grappa/core/GrappaProxy.sol";
-import "grappa/core/CashOptionToken.sol";
+import {CashOptionToken} from "grappa/core/CashOptionToken.sol";
 
 // Mocks
 import "../mocks/MockERC20.sol";
@@ -15,14 +15,14 @@ import "../mocks/MockWhitelist.sol";
 import "grappa-test/mocks/MockOracle.sol";
 
 // Types
-import "grappa/config/types.sol";
-import "grappa/config/enums.sol";
+import {ProductDetails, AssetDetail, Balance} from "grappa/config/types.sol";
+import {TokenType} from "grappa/config/enums.sol";
+
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 
-import "../utils/Utilities.sol";
-
-import {ActionHelper} from "grappa-test/shared/ActionHelper.sol";
+import {Utilities} from "../utils/Utilities.sol";
+import {ActionHelper} from "../utils/ActionHelper.sol";
 
 // solhint-disable max-states-count
 

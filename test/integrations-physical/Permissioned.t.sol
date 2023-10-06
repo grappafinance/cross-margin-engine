@@ -11,6 +11,8 @@ import "pomace/config/errors.sol";
 
 import "pomace-test/mocks/MockERC20.sol";
 
+import "../../src/config/types.sol";
+
 contract Permissioned_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;

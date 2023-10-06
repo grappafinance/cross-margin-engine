@@ -11,7 +11,7 @@ import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
 import "../src/settled-physical/CrossMarginPhysicalEngineProxy.sol";
 
-import "../test/utils/Utilities.sol";
+import {Utilities} from "../test/utils/Utilities.sol";
 
 contract DeployPhysicalMarginEngine is Script, Utilities {
     function run() external {

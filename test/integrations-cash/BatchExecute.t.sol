@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
-import "grappa/config/enums.sol";
+import {TokenType} from "grappa/config/enums.sol";
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
 

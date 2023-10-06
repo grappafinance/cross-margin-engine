@@ -5,8 +5,6 @@ pragma solidity ^0.8.0;
 // inheriting contracts
 import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
 
-// constants and types
-import "pomace/config/enums.sol";
 import "pomace/config/errors.sol";
 
 /**
