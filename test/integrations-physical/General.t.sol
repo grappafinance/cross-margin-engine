@@ -10,11 +10,9 @@ import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
+import "../../src/settled-physical/types.sol";
 
 import "pomace-test/mocks/MockERC20.sol";
-
-import {ActionArgs} from "../../src/settled-physical/types.sol";
 
 contract General_CMP is CrossMarginPhysicalFixture {
     function setUp() public {

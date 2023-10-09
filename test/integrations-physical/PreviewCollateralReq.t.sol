@@ -9,10 +9,8 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
-import "../../src/config/types.sol";
+import "../../src/settled-physical/types.sol";
 import "../../src/libraries/AccountUtil.sol";
-
-import {ActionArgs} from "../../src/settled-physical/types.sol";
 
 contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {
     uint8 constant PUT = uint8(0);

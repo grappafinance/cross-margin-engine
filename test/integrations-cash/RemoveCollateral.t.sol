@@ -10,9 +10,7 @@ import "grappa/config/enums.sol";
 import "grappa/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
-
-import {ActionArgs} from "../../src/settled-cash/types.sol";
+import "../../src/settled-cash/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestRemoveCollateral_CMC is CrossMarginCashFixture {

@@ -9,9 +9,7 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
-import "../../src/config/types.sol";
-
-import {ActionArgs, BatchExecute} from "../../src/settled-physical/types.sol";
+import "../../src/settled-physical/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestTransfer_CMP is CrossMarginPhysicalFixture {

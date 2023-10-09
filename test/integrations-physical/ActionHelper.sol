@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../src/config/types.sol";
-
-import {ActionType} from "../../src/settled-physical/enums.sol";
-import {ActionArgs} from "../../src/settled-physical/types.sol";
+import "../../src/settled-physical/types.sol";
 
 import {TokenIdUtil} from "pomace/libraries/TokenIdUtil.sol";
-
 import {TokenType} from "pomace/config/enums.sol";
 
 abstract contract ActionHelper {

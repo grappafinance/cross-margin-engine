@@ -6,12 +6,10 @@ import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import {Balance} from "grappa/config/types.sol";
 
-import "../../src/config/types.sol";
+import "../../src/settled-cash/types.sol";
 
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
-
-import {ActionArgs} from "../../src/settled-cash/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestAddCollateral_CMC is CrossMarginCashFixture {

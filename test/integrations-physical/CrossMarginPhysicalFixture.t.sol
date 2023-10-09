@@ -18,13 +18,13 @@ import "pomace-test/mocks/MockOracle.sol";
 
 import {ProductDetails, AssetDetail, Balance} from "pomace/config/types.sol";
 import "pomace/config/enums.sol";
-import "../../src/config/types.sol";
+
 import "../../src/config/errors.sol";
+import "../../src/settled-physical/types.sol";
 
 import "../utils/Utilities.sol";
 
 import {ActionHelper} from "./ActionHelper.sol";
-import {ActionArgs} from "../../src/settled-physical/types.sol";
 
 // solhint-disable max-states-count
 

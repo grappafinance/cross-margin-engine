@@ -18,12 +18,11 @@ import "grappa-test/mocks/MockOracle.sol";
 import {ProductDetails, AssetDetail, Balance} from "grappa/config/types.sol";
 import {TokenType} from "grappa/config/enums.sol";
 
-import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
+import "../../src/settled-cash/types.sol";
 
 import {Utilities} from "../utils/Utilities.sol";
 import {ActionHelper} from "./ActionHelper.sol";
-import {ActionArgs} from "../../src/settled-cash/types.sol";
 
 // solhint-disable max-states-count
 

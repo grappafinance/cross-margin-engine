@@ -10,11 +10,9 @@ import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
+import "../../src/settled-cash/types.sol";
 
 import "../mocks/MockERC20.sol";
-
-import {ActionArgs} from "../../src/settled-cash/types.sol";
 
 contract Permissioned_CMC is CrossMarginCashFixture {
     uint256 public expiry;

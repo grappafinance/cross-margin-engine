@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../config/types.sol";
+
 import {Balance} from "grappa/config/types.sol";
 import {ActionType} from "./enums.sol";
 

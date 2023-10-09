@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../src/config/types.sol";
-
-import {ActionType} from "../../src/settled-cash/enums.sol";
-import {ActionArgs} from "../../src/settled-cash/types.sol";
+import "../../src/settled-cash/types.sol";
 
 import {TokenIdUtil} from "grappa/libraries/TokenIdUtil.sol";
-
 import {TokenType} from "grappa/config/enums.sol";
 
 abstract contract ActionHelper {

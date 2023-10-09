@@ -8,9 +8,7 @@ import "grappa/config/types.sol";
 import "grappa/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
-
-import {ActionArgs} from "../../src/settled-cash/types.sol";
+import "../../src/settled-cash/types.sol";
 
 contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
     uint256 private depositAmount = 100 * 1e6;
