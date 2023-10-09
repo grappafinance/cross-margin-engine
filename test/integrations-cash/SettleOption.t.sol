@@ -13,6 +13,8 @@ import "grappa/config/errors.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
+import {ActionArgs, BatchExecute} from "../../src/settled-cash/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleCoveredCall_CMC is CrossMarginCashFixture {
     uint256 public expiry;

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../config/types.sol";
 import {Balance} from "grappa/config/types.sol";
+import {ActionType} from "./enums.sol";
 
 /**
  * @dev base unit of cross margin account. This is the data stored in the state
@@ -15,4 +16,14 @@ struct CrossMarginAccount {
     Position[] shorts;
     Position[] longs;
     Balance[] collaterals;
+}
+
+struct ActionArgs {
+    ActionType action;
+    bytes data;
+}
+
+struct BatchExecute {
+    address subAccount;
+    ActionArgs[] actions;
 }

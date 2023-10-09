@@ -9,11 +9,9 @@ enum ActionType {
     RemoveCollateral,
     MintShort,
     BurnShort,
-    MergeOptionToken, // These actions are defined in "DebitSpread"
-    SplitOptionToken, // These actions are defined in "DebitSpread"
-    ExerciseToken,
     AddLong,
     RemoveLong,
+    ExerciseToken,
     SettleAccount,
     // actions that influence more than one subAccounts:
     // These actions are defined in "OptionTransferable"

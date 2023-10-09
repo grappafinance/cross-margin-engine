@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestRemoveLong_CMC is CrossMarginCashFixture {
     uint256 public expiry;

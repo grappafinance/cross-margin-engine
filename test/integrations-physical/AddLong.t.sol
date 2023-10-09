@@ -13,6 +13,8 @@ import "pomace-test/mocks/MockERC20.sol";
 
 import "../../src/config/types.sol";
 
+import {ActionArgs} from "../../src/settled-physical/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestAddLong_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;

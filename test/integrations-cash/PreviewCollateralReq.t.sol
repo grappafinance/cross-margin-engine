@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../../src/libraries/AccountUtil.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 contract PreviewCollateralReqBase_CMC is CrossMarginCashFixture {
     uint256 public expiry;
 

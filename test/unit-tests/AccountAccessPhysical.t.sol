@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import {CrossMarginPhysicalFixture} from "../integrations-physical/CrossMarginPhysicalFixture.t.sol";
 
-import {ActionArgs} from "../../src/config/types.sol";
 import "pomace/config/errors.sol";
 
 import "../../src/config/errors.sol";

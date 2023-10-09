@@ -13,6 +13,8 @@ import "../../src/config/types.sol";
 
 import "pomace-test/mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-physical/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {
     MockERC20 internal lsEth;

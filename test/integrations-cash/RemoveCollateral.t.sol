@@ -12,6 +12,8 @@ import "grappa/config/errors.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/types.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestRemoveCollateral_CMC is CrossMarginCashFixture {
     uint256 private depositAmount = 1000 * 1e6;

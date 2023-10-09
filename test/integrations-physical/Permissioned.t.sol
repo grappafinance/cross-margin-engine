@@ -13,6 +13,8 @@ import "pomace-test/mocks/MockERC20.sol";
 
 import "../../src/config/types.sol";
 
+import {ActionArgs} from "../../src/settled-physical/types.sol";
+
 contract Permissioned_CMP is CrossMarginPhysicalFixture {
     uint256 public expiry;
     uint256 public exerciseWindow;

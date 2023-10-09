@@ -20,6 +20,8 @@ import {AccountUtil} from "../libraries/AccountUtil.sol";
 
 // Cross margin types
 import "./types.sol";
+import "./enums.sol";
+
 import "../config/errors.sol";
 
 import {ProductDetails} from "pomace/config/types.sol";

@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 contract Permissioned_CMC is CrossMarginCashFixture {
     uint256 public expiry;
     uint256 public tokenId;

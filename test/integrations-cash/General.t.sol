@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 contract General_CMC is CrossMarginCashFixture {
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);

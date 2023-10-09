@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-cash/types.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestMintWithPartialMarginBeta_CMC is CrossMarginCashFixture {
     MockERC20 internal lsEth;

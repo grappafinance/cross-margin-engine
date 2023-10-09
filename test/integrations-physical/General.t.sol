@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "pomace-test/mocks/MockERC20.sol";
 
+import {ActionArgs} from "../../src/settled-physical/types.sol";
+
 contract General_CMP is CrossMarginPhysicalFixture {
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);

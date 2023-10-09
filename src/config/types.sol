@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ActionType} from "./enums.sol";
-
 /**
  * @dev struct used in memory to represent a cross margin account's option set
  *      this is a grouping of like underlying, collateral, strike (asset), and expiry
@@ -43,14 +41,4 @@ struct SettlementTracker {
     uint64 issued;
     uint80 totalDebt;
     uint80 totalPaid;
-}
-
-struct ActionArgs {
-    ActionType action;
-    bytes data;
-}
-
-struct BatchExecute {
-    address subAccount;
-    ActionArgs[] actions;
 }

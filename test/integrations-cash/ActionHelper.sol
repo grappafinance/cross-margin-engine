@@ -1,30 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../src/config/enums.sol";
 import "../../src/config/types.sol";
 
-import {TokenIdUtil as GrappaTokenIdUtil} from "grappa/libraries/TokenIdUtil.sol";
-import {TokenIdUtil as PomaceTokenIdUtil} from "pomace/libraries/TokenIdUtil.sol";
+import {ActionType} from "../../src/settled-cash/enums.sol";
+import {ActionArgs} from "../../src/settled-cash/types.sol";
 
-import {TokenType as GrappaTokenType} from "grappa/config/enums.sol";
-import {TokenType as PomaceTokenType} from "pomace/config/enums.sol";
+import {TokenIdUtil} from "grappa/libraries/TokenIdUtil.sol";
+
+import {TokenType} from "grappa/config/enums.sol";
 
 abstract contract ActionHelper {
-    function getTokenId(GrappaTokenType tokenType, uint40 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
+    function getTokenId(TokenType tokenType, uint40 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
         internal
         pure
         returns (uint256 tokenId)
     {
-        tokenId = GrappaTokenIdUtil.getTokenId(tokenType, productId, uint64(expiry), uint64(longStrike), uint64(shortStrike));
-    }
-
-    function getTokenId(PomaceTokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 exerciseWindow)
-        internal
-        pure
-        returns (uint256 tokenId)
-    {
-        tokenId = PomaceTokenIdUtil.getTokenId(tokenType, productId, uint64(expiry), uint64(strike), uint64(exerciseWindow));
+        tokenId = TokenIdUtil.getTokenId(tokenType, productId, uint64(expiry), uint64(longStrike), uint64(shortStrike));
     }
 
     function createAddCollateralAction(uint8 collateralId, address from, uint256 amount)
@@ -119,8 +111,12 @@ abstract contract ActionHelper {
         return ActionArgs({action: ActionType.RemoveLong, data: abi.encode(tokenId, uint64(amount), recipient)});
     }
 
-    function createExerciseTokenAction(uint256 tokenId, uint256 amount) internal pure returns (ActionArgs memory action) {
-        return ActionArgs({action: ActionType.ExerciseToken, data: abi.encode(tokenId, uint64(amount))});
+    function createBurnShortInAccountAction(uint256 tokenId, address from, uint256 amount)
+        internal
+        pure
+        returns (ActionArgs memory action)
+    {
+        return ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, from, uint64(amount))});
     }
 
     function createSettleAction() internal pure returns (ActionArgs memory action) {
