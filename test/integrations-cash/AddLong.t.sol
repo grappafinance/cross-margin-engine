@@ -4,13 +4,12 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
-import "grappa/config/types.sol";
-import "grappa/config/enums.sol";
+import {TokenType} from "grappa/config/enums.sol";
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
+import "../../src/settled-cash/types.sol";
 
 import "../mocks/MockERC20.sol";
 

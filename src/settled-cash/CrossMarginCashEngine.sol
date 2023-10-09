@@ -32,8 +32,8 @@ import "./types.sol";
 import "../config/errors.sol";
 
 // global constants and types
-import {BatchExecute, ActionArgs} from "grappa/config/types.sol";
-import "grappa/config/enums.sol";
+import {TokenType} from "grappa/config/enums.sol";
+
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
 
@@ -206,7 +206,7 @@ contract CrossMarginCashEngine is
      * @notice execute multiple actions on one subAccounts
      * @dev    check margin all actions are applied
      */
-    function execute(address _subAccount, ActionArgs[] calldata actions) external override nonReentrant {
+    function execute(address _subAccount, ActionArgs[] calldata actions) external nonReentrant {
         _checkPermissioned(msg.sender);
 
         _execute(_subAccount, actions);

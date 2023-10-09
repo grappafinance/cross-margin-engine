@@ -11,7 +11,7 @@ import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
+import "../../src/settled-physical/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestBurnOption_CMP is CrossMarginPhysicalFixture {
@@ -158,7 +158,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
         assertEq(longs.length, 0);
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(tokenId, address(this), amount);
 
         // decreases longs
         vm.expectEmit(true, true, true, true);
@@ -211,7 +211,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
         assertEq(shorts.length, 0);
         assertEq(longs.length, 0);
 
-        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(tokenId, address(this), amount);
 
         // decreases longs
         vm.expectEmit(true, true, true, true);
@@ -228,7 +228,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
         address subAccount = address(uint160(address(this)) ^ uint160(1));
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(tokenId, address(this), amount);
 
         vm.expectRevert(CM_InvalidToken.selector);
         engine.execute(subAccount, actions);
@@ -238,8 +238,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
         uint256 badTokenId = getTokenId(TokenType.CALL, pidUsdcCollat, block.timestamp + 1 days, 4000 * 1e6, 30 minutes);
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] =
-            ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(badTokenId, address(this), uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(badTokenId, address(this), amount);
 
         vm.expectRevert(CM_InvalidToken.selector);
         engine.execute(alice, actions);
@@ -250,7 +249,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
         option.safeTransferFrom(address(engine), address(this), tokenId, 1, "");
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(tokenId, address(this), amount);
 
         vm.expectRevert(stdError.arithmeticError);
         engine.execute(alice, actions);
@@ -258,7 +257,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
 
     function testCannotBurnFromUnAuthorizedAccount() public {
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, alice, uint64(amount))});
+        actions[0] = createBurnShortInAccountAction(tokenId, alice, amount);
 
         // expect error
         vm.expectRevert(BM_InvalidFromAddress.selector);

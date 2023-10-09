@@ -9,7 +9,7 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
-import "../../src/config/types.sol";
+import "../../src/settled-physical/types.sol";
 import "../../src/libraries/AccountUtil.sol";
 
 contract PreviewCollateralReqBase_CMP is CrossMarginPhysicalFixture {

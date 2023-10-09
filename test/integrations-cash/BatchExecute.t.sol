@@ -5,12 +5,13 @@ pragma solidity ^0.8.0;
 import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
-import "grappa/config/enums.sol";
+import {TokenType} from "grappa/config/enums.sol";
+
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
 
 import "../../src/config/errors.sol";
-import "../../src/config/types.sol";
+import "../../src/settled-cash/types.sol";
 
 // solhint-disable-next-line contract-name-camelcase
 contract TestBatchExecute_CMC is CrossMarginCashFixture {

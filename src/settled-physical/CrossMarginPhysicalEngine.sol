@@ -32,8 +32,8 @@ import "./types.sol";
 import "../config/errors.sol";
 
 // global constants and types
-import {BatchExecute, ActionArgs} from "pomace/config/types.sol";
-import "pomace/config/enums.sol";
+import {TokenType} from "pomace/config/enums.sol";
+
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
@@ -161,7 +161,7 @@ contract CrossMarginPhysicalEngine is
      * @notice execute multiple actions on one subAccounts
      * @dev    check margin all actions are applied
      */
-    function execute(address _subAccount, ActionArgs[] calldata actions) external override nonReentrant {
+    function execute(address _subAccount, ActionArgs[] calldata actions) external nonReentrant {
         _checkPermissioned(msg.sender);
 
         _execute(_subAccount, actions);

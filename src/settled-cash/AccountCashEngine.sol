@@ -6,7 +6,6 @@ pragma solidity ^0.8.0;
 import {BaseEngine} from "grappa/core/engines/BaseEngine.sol";
 
 // constants and types
-import "grappa/config/enums.sol";
 import "grappa/config/errors.sol";
 
 /**

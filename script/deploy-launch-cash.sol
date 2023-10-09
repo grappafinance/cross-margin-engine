@@ -11,7 +11,7 @@ import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import "../src/settled-cash/CrossMarginCashEngine.sol";
 import "../src/settled-cash/CrossMarginCashEngineProxy.sol";
 
-import "../test/utils/Utilities.sol";
+import {Utilities} from "../test/utils/Utilities.sol";
 
 contract Deploy is Script, Utilities {
     function run() external {

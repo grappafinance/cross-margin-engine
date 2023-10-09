@@ -9,7 +9,7 @@ import "pomace/config/types.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
 
-import "../../src/config/types.sol";
+import "../../src/settled-physical/types.sol";
 
 import "pomace-test/mocks/MockERC20.sol";
 

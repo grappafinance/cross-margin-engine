@@ -22,12 +22,15 @@ import {AccountUtil} from "../libraries/AccountUtil.sol";
 
 // Cross margin types
 import "./types.sol";
+import "./enums.sol";
+
 import "../config/errors.sol";
 
 import {ProductDetails} from "grappa/config/types.sol";
+
 import "grappa/config/constants.sol";
-import "grappa/config/enums.sol";
 import "grappa/config/errors.sol";
+import {TokenType} from "grappa/config/enums.sol";
 
 /**
  * @title   CrossMarginCashMath
