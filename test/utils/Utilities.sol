@@ -3,9 +3,6 @@ pragma solidity >=0.8.0;
 
 import {Vm} from "forge-std/Vm.sol";
 
-import {TokenType} from "pomace/config/enums.sol";
-import {TokenIdUtil} from "pomace/libraries/TokenIdUtil.sol";
-
 //common utilities for forge tests
 abstract contract Utilities {
     // solhint-disable max-line-length
