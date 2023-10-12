@@ -323,6 +323,7 @@ contract TestPreviewCollateralAvailablePM_CMP is CrossMarginPhysicalFixture {
         assertEq(addresses[0], address(lsEth));
         assertEq(amounts.length, 1);
         assertEq(amounts[0], depositAmount - depositAmount * UNIT / newLsEthPrice);
+        assertEq(isUnderWater, false);
     }
 
     function testPreviewWithHigherValueCollatPut() public {

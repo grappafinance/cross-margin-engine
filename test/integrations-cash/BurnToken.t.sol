@@ -21,6 +21,8 @@ contract TestBurnOption_CMC is CrossMarginCashFixture {
     uint256 public amount = 1 * UNIT;
     uint256 public tokenId;
 
+    event CashOptionTokenBurned(address subAccount, uint256 tokenId, uint256 amount);
+
     function setUp() public {
         weth.mint(address(this), depositAmount);
         weth.approve(address(engine), type(uint256).max);
@@ -42,6 +44,9 @@ contract TestBurnOption_CMC is CrossMarginCashFixture {
         // build burn account
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createBurnAction(tokenId, address(this), amount);
+
+        vm.expectEmit(true, true, true, true);
+        emit CashOptionTokenBurned(address(this), tokenId, amount);
 
         // action
         engine.execute(address(this), actions);
@@ -99,6 +104,162 @@ contract TestBurnOption_CMC is CrossMarginCashFixture {
         // build burn arg: try building with alice's options
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createBurnAction(tokenId, alice, amount);
+
+        // expect error
+        vm.expectRevert(BM_InvalidFromAddress.selector);
+        engine.execute(address(this), actions);
+    }
+}
+
+// solhint-disable-next-line contract-name-camelcase
+contract TestBurnOptionFromAccount_CMC is CrossMarginCashFixture {
+    uint256 public depositAmount = 1 ether;
+    uint256 public amount = 1 * UNIT;
+    uint256 public tokenId;
+
+    event CashOptionTokenBurned(address subAccount, uint256 tokenId, uint256 amount);
+
+    function setUp() public {
+        weth.mint(address(this), 1 * 1e18);
+        weth.approve(address(engine), type(uint256).max);
+
+        weth.mint(alice, 1 * 1e18);
+
+        vm.startPrank(alice);
+        weth.approve(address(engine), type(uint256).max);
+        engine.setAccountAccess(address(this), type(uint256).max);
+        vm.stopPrank();
+
+        oracle.setSpotPrice(address(weth), 1900 * UNIT);
+
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, block.timestamp + 1 days, 4000 * 1e6, 0);
+
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(wethId, alice, depositAmount);
+        actions[1] = createMintIntoAccountAction(tokenId, address(this), amount);
+        engine.execute(alice, actions);
+
+        option.setApprovalForAll(address(engine), true);
+    }
+
+    function testBurnFromAccount() public {
+        Position[] memory shorts;
+        Position[] memory longs;
+
+        (shorts, longs,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 1);
+        assertEq(longs[0].tokenId, tokenId);
+
+        (shorts, longs,) = engine.marginAccounts(alice);
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(longs.length, 0);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+
+        // decreases longs
+        vm.expectEmit(true, true, true, true);
+        emit CashOptionTokenBurned(address(this), tokenId, amount);
+
+        // decreases shorts
+        vm.expectEmit(true, true, true, true);
+        emit CashOptionTokenBurned(alice, tokenId, amount);
+
+        engine.execute(alice, actions);
+
+        (shorts, longs,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 0);
+
+        (shorts, longs,) = engine.marginAccounts(alice);
+
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 0);
+    }
+
+    function testCanBurnFromSubAccount() public {
+        address subAccount = address(uint160(address(this)) ^ uint160(1));
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
+        engine.execute(subAccount, actions);
+
+        actions[0] = createTransferShortAction(tokenId, subAccount, amount);
+        engine.execute(alice, actions);
+
+        Position[] memory shorts;
+        Position[] memory longs;
+
+        (shorts, longs,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 1);
+        assertEq(longs[0].tokenId, tokenId);
+
+        (shorts, longs,) = engine.marginAccounts(subAccount);
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(longs.length, 0);
+
+        (shorts, longs,) = engine.marginAccounts(alice);
+
+        assertEq(shorts.length, 0);
+        assertEq(longs.length, 0);
+
+        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+
+        // decreases longs
+        vm.expectEmit(true, true, true, true);
+        emit CashOptionTokenBurned(address(this), tokenId, amount);
+
+        // decreases shorts
+        vm.expectEmit(true, true, true, true);
+        emit CashOptionTokenBurned(subAccount, tokenId, amount);
+
+        engine.execute(subAccount, actions);
+    }
+
+    function testCannotBurnFromEmptySubAccount() public {
+        address subAccount = address(uint160(address(this)) ^ uint160(1));
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+
+        vm.expectRevert(CM_InvalidToken.selector);
+        engine.execute(subAccount, actions);
+    }
+
+    function testCannotBurnFromWithWrongTokenId() public {
+        uint256 badTokenId = getTokenId(TokenType.CALL, pidUsdcCollat, block.timestamp + 1 days, 4000 * 1e6, 0);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] =
+            ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(badTokenId, address(this), uint64(amount))});
+
+        vm.expectRevert(CM_InvalidToken.selector);
+        engine.execute(alice, actions);
+    }
+
+    function testCannotBurnWhenOptionTokenBalanceIsLow() public {
+        vm.prank(address(engine));
+        option.safeTransferFrom(address(engine), address(this), tokenId, 1, "");
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, address(this), uint64(amount))});
+
+        vm.expectRevert(stdError.arithmeticError);
+        engine.execute(alice, actions);
+    }
+
+    function testCannotBurnFromUnAuthorizedAccount() public {
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = ActionArgs({action: ActionType.BurnShortInAccount, data: abi.encode(tokenId, alice, uint64(amount))});
 
         // expect error
         vm.expectRevert(BM_InvalidFromAddress.selector);
