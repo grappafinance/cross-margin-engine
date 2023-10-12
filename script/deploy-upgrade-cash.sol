@@ -27,7 +27,4 @@ contract Deploy is Script {
 
         console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);
     }
-
-    // add a function prefixed with test here so forge coverage will ignore this file
-    function testChill() public {}
 }

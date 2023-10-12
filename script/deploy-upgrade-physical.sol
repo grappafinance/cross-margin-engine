@@ -5,7 +5,6 @@ import "forge-std/Script.sol";
 
 import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
 
-
 contract DeployPhysicalMarginEngine is Script {
     function run() external {
         console.log("Deployer", msg.sender);
@@ -13,14 +12,13 @@ contract DeployPhysicalMarginEngine is Script {
         vm.startBroadcast();
 
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginPhysicalEngine(vm.envAddress("PomaceProxy"), vm.envAddress("PomaceOptionToken")));
+        address engineImplementation =
+            address(new CrossMarginPhysicalEngine(vm.envAddress("PomaceProxy"), vm.envAddress("PomaceOptionToken")));
 
         console.log("CrossMargin Physical Engine: \t\t", engineImplementation);
 
         vm.stopBroadcast();
     }
 
-    function deployCrossMarginPhysicalEngine(address pomace, address optionToken) public {
-
-    }
+    function deployCrossMarginPhysicalEngine(address pomace, address optionToken) public {}
 }
