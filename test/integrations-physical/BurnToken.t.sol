@@ -117,6 +117,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
     uint256 public tokenId;
 
     event PhysicalOptionTokenBurned(address subAccount, uint256 tokenId, uint256 amount);
+    event PhysicalOptionTokenRemoved(address subAccount, uint256 tokenId, uint64 amount);
 
     function setUp() public {
         weth.mint(address(this), 1 * 1e18);
@@ -166,7 +167,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
 
         // decreases shorts
         vm.expectEmit(true, true, true, true);
-        emit PhysicalOptionTokenBurned(alice, tokenId, amount);
+        emit PhysicalOptionTokenRemoved(alice, tokenId, uint64(amount));
 
         engine.execute(alice, actions);
 
@@ -219,7 +220,7 @@ contract TestBurnOptionFromAccount_CMP is CrossMarginPhysicalFixture {
 
         // decreases shorts
         vm.expectEmit(true, true, true, true);
-        emit PhysicalOptionTokenBurned(subAccount, tokenId, amount);
+        emit PhysicalOptionTokenRemoved(subAccount, tokenId, uint64(amount));
 
         engine.execute(subAccount, actions);
     }

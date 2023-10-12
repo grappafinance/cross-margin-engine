@@ -115,7 +115,7 @@ abstract contract AccountPhysicalEngine is BaseEngine {
         // update the account in state
         _decreaseShortInAccount(_subAccount, tokenId, amount);
 
-        emit PhysicalOptionTokenBurned(_subAccount, tokenId, amount);
+        emit PhysicalOptionTokenRemoved(_subAccount, tokenId, amount);
 
         // burn option token
         optionToken.burn(address(this), tokenId, amount);
