@@ -240,21 +240,6 @@ contract CrossMarginCashEngine is
     }
 
     /**
-     * @notice  move an account to someone else
-     * @dev     expected to be call by account owner
-     * @param _subAccount the id of subaccount to transfer
-     * @param _newSubAccount the id of receiving account
-     */
-    function transferAccount(address _subAccount, address _newSubAccount) external {
-        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
-
-        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
-        accounts[_newSubAccount] = accounts[_subAccount];
-
-        delete accounts[_subAccount];
-    }
-
-    /**
      * @dev view function to get all shorts, longs and collaterals
      */
     function marginAccounts(address _subAccount)
