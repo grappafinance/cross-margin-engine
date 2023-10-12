@@ -68,4 +68,82 @@ contract CashEngineProxyTest is Test {
         vm.expectRevert("not upgrdable anymore");
         engine.upgradeTo(address(v3));
     }
+
+    function testCannotPermitAccountAccessCrossProxy() public {
+        uint256 pKey = 0x10101;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+        bytes32 msgTypeHash =
+            keccak256("PermitAccountAccess(address subAccount,address actor,uint256 allowedExecutions,uint256 nonce)");
+        // create a new engine proxy with the same implementation
+        CrossMarginCashEngine engine2 = CrossMarginCashEngine(
+            address(
+                new CrossMarginCashEngineProxy(address(implementation), abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this)))
+            )
+        );
+
+        address account = vm.addr(pKey);
+        uint160 maskedId = uint160(account) | 0xFF;
+
+        // sanity check
+        assertEq(engine.allowedExecutionLeft(maskedId, address(this)), 0);
+        assertEq(engine2.allowedExecutionLeft(maskedId, address(this)), 0);
+
+        (v, r, s) = vm.sign(
+            pKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(msgTypeHash, account, address(this), type(uint256).max, 0))
+                )
+            )
+        );
+
+        // assert that implementation contract reverts on invalid signature if called directly
+        vm.expectRevert(CM_InvalidSignature.selector);
+        implementation.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        // assert that second proxy contract reverts on invalid signature
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine2.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        // can permit access for the first proxy
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        assertEq(engine.allowedExecutionLeft(maskedId, address(this)), type(uint256).max);
+        assertEq(engine2.allowedExecutionLeft(maskedId, address(this)), 0);
+
+        // check that proxy 1 and 2 domain separators are incompatible
+        (v, r, s) = vm.sign(
+            pKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine2.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(msgTypeHash, account, address(this), type(uint256).max, 1))
+                )
+            )
+        );
+
+        vm.expectRevert(CM_InvalidSignature.selector);
+        engine.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+
+        // sign message for the second proxy
+        (v, r, s) = vm.sign(
+            pKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    engine2.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(msgTypeHash, account, address(this), type(uint256).max, 0))
+                )
+            )
+        );
+
+        // can permit access for the second proxy
+        engine2.permitAccountAccess(account, address(this), type(uint256).max, v, r, s);
+        assertEq(engine2.allowedExecutionLeft(maskedId, address(this)), type(uint256).max);
+    }
 }

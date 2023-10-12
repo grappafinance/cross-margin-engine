@@ -60,6 +60,14 @@ contract CrossMarginCashEngine is
     using SafeCast for int256;
     using TokenIdUtil for uint256;
 
+    /*///////////////////////////////////////////////////////////////
+                            Immutables
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev initial chain id used in domain separator
+    uint256 public immutable initialChainId;
+
+    /// @dev oracle to handle partial margining
     IOracle public immutable oracle;
 
     /*///////////////////////////////////////////////////////////////
@@ -86,6 +94,17 @@ contract CrossMarginCashEngine is
     mapping(uint256 => uint256) private collateralizable;
 
     /*///////////////////////////////////////////////////////////////
+                         State Variables V3
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev initial cached domain separator
+    bytes32 public initialDomainSeparator;
+
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) public nonces;
+
+    /*///////////////////////////////////////////////////////////////
                             Events
     //////////////////////////////////////////////////////////////*/
 
@@ -99,6 +118,7 @@ contract CrossMarginCashEngine is
         // solhint-disable-next-line reason-string
         if (_oracle == address(0)) revert();
 
+        initialChainId = block.chainid;
         oracle = IOracle(_oracle);
     }
 
@@ -112,6 +132,8 @@ contract CrossMarginCashEngine is
 
         _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
+
+        initialDomainSeparator = _computeDomainSeparator();
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -129,6 +151,12 @@ contract CrossMarginCashEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+
+    function setDomainSeperator() external {
+        if (initialDomainSeparator != bytes32(0)) revert();
+
+        initialDomainSeparator = _computeDomainSeparator();
+    }
 
     /**
      * @notice Sets the whitelist contract
@@ -280,6 +308,66 @@ contract CrossMarginCashEngine is
         account.longs = longs;
 
         return _getMinCollateral(account);
+    }
+
+    /**
+     * @notice  grant or revoke an account access to all your sub-accounts based on a signed message
+     * @dev     expected to have a valid signature signed with account private key
+     * @param   _subAccount account which grants the access
+     * @param   _actor account which is granted the access
+     * @param   _allowedExecutions how many times the account is authorized to update your accounts.
+     *          set to max(uint256) to allow permanent access
+     * @param   _v signature v
+     * @param   _r signature r
+     * @param   _s signature s
+     */
+    function permitAccountAccess(
+        address _subAccount,
+        address _actor,
+        uint256 _allowedExecutions,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external {
+        unchecked {
+            address recoveredAddress = ecrecover(
+                keccak256(
+                    abi.encodePacked(
+                        "\x19\x01",
+                        DOMAIN_SEPARATOR(),
+                        keccak256(
+                            abi.encode(
+                                keccak256(
+                                    "PermitAccountAccess(address subAccount,address actor,uint256 allowedExecutions,uint256 nonce)"
+                                ),
+                                _subAccount,
+                                _actor,
+                                _allowedExecutions,
+                                nonces[_subAccount]++
+                            )
+                        )
+                    )
+                ),
+                _v,
+                _r,
+                _s
+            );
+
+            if (recoveredAddress == address(0) || recoveredAddress != _subAccount) revert CM_InvalidSignature();
+        }
+
+        uint160 maskedId = uint160(_subAccount) | 0xFF;
+        allowedExecutionLeft[maskedId][_actor] = _allowedExecutions;
+
+        emit AccountAuthorizationUpdate(maskedId, _actor, _allowedExecutions);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                Public Functions
+    //////////////////////////////////////////////////////////////*/
+
+    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+        return block.chainid == initialChainId ? initialDomainSeparator : _computeDomainSeparator();
     }
 
     /**
@@ -512,5 +600,17 @@ contract CrossMarginCashEngine is
 
         uint256 mask = 1 << _assetId1;
         return collateralizable[_assetId0] & mask != 0;
+    }
+
+    function _computeDomainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("Cross Margin Cash Engine"),
+                keccak256("1"),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 }
