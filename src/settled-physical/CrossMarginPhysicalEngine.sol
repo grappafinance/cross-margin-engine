@@ -8,8 +8,8 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // inheriting contracts
-import {OptionTransferable} from "pomace/core/engines/mixins/OptionTransferable.sol";
 import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
+import {AccountPhysicalEngine} from "./AccountPhysicalEngine.sol";
 
 // interfaces
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
@@ -46,7 +46,7 @@ import "pomace/config/errors.sol";
  *             Interacts with pomace to fetch registered asset info
  */
 contract CrossMarginPhysicalEngine is
-    OptionTransferable,
+    AccountPhysicalEngine,
     IMarginEngine,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -621,6 +621,8 @@ contract CrossMarginPhysicalEngine is
                 _mintOptionIntoAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.BurnShort) {
                 _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferLong) {
                 _transferLong(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferShort) {

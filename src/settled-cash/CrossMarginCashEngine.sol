@@ -8,8 +8,8 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // inheriting contracts
-import {OptionTransferable} from "grappa/core/engines/mixins/OptionTransferable.sol";
 import {BaseEngine} from "grappa/core/engines/BaseEngine.sol";
+import {AccountCashEngine} from "./AccountCashEngine.sol";
 
 // interfaces
 import {IMarginEngine} from "grappa/interfaces/IMarginEngine.sol";
@@ -46,7 +46,7 @@ import "grappa/config/errors.sol";
  *             Interacts with grappa to fetch registered asset info
  */
 contract CrossMarginCashEngine is
-    OptionTransferable,
+    AccountCashEngine,
     IMarginEngine,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -562,6 +562,8 @@ contract CrossMarginCashEngine is
                 _mintOptionIntoAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.BurnShort) {
                 _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferLong) {
                 _transferLong(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferShort) {
