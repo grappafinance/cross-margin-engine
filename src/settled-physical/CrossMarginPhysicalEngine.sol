@@ -8,8 +8,8 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
 
 // inheriting contracts
-import {OptionTransferable} from "pomace/core/engines/mixins/OptionTransferable.sol";
 import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
+import {AccountPhysicalEngine} from "./AccountPhysicalEngine.sol";
 
 // interfaces
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
@@ -46,7 +46,7 @@ import "pomace/config/errors.sol";
  *             Interacts with pomace to fetch registered asset info
  */
 contract CrossMarginPhysicalEngine is
-    OptionTransferable,
+    AccountPhysicalEngine,
     IMarginEngine,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -59,6 +59,13 @@ contract CrossMarginPhysicalEngine is
     using SafeCast for uint256;
     using SafeCast for int256;
     using TokenIdUtil for uint256;
+
+    /*///////////////////////////////////////////////////////////////
+                            Immutables
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev initial chain id used in domain separator
+    uint256 public immutable initialChainId;
 
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
@@ -75,19 +82,28 @@ contract CrossMarginPhysicalEngine is
     ///     checks recipient on payCashValue
     IWhitelist public whitelist;
 
-    /*///////////////////////////////////////////////////////////////
-                         State Variables V1
-    //////////////////////////////////////////////////////////////*/
-
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
+
+    /*///////////////////////////////////////////////////////////////
+                         State Variables V2
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev initial cached domain separator
+    bytes32 public initialDomainSeparator;
+
+    /// @dev nonce for signed messages to prevent replay attacks
+    ///      address => nonce
+    mapping(address => uint256) public nonces;
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {}
+    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {
+        initialChainId = block.chainid;
+    }
 
     /*///////////////////////////////////////////////////////////////
                             Initializer
@@ -99,6 +115,8 @@ contract CrossMarginPhysicalEngine is
 
         _transferOwnership(_owner);
         __ReentrancyGuard_init_unchained();
+
+        initialDomainSeparator = _computeDomainSeparator();
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -116,6 +134,12 @@ contract CrossMarginPhysicalEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+
+    function setDomainSeperator() external {
+        if (initialDomainSeparator != bytes32(0)) revert();
+
+        initialDomainSeparator = _computeDomainSeparator();
+    }
 
     /**
      * @notice Sets the whitelist contract
@@ -314,6 +338,70 @@ contract CrossMarginPhysicalEngine is
         account.collaterals = collaterals;
 
         return _getCollateralAvailable(account);
+    }
+
+    /**
+     * @notice  grant or revoke an account access to all your sub-accounts based on a signed message
+     * @dev     expected to have a valid signature signed with account private key
+     * @param   _subAccount account which grants the access
+     * @param   _actor account which is granted the access
+     * @param   _allowedExecutions how many times the account is authorized to update your accounts.
+     *          set to max(uint256) to allow permanent access
+     * @param   _v signature v
+     * @param   _r signature r
+     * @param   _s signature s
+     */
+    function permitAccountAccess(
+        address _subAccount,
+        address _actor,
+        uint256 _allowedExecutions,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external {
+        // assert valid signature
+        // Unchecked because the only math done is incrementing
+        // the owner's nonce which cannot realistically overflow.
+        unchecked {
+            address recoveredAddress = ecrecover(
+                keccak256(
+                    abi.encodePacked(
+                        "\x19\x01",
+                        DOMAIN_SEPARATOR(),
+                        keccak256(
+                            abi.encode(
+                                keccak256(
+                                    "PermitAccountAccess(address subAccount,address actor,uint256 allowedExecutions,uint256 nonce)"
+                                ),
+                                _subAccount,
+                                _actor,
+                                _allowedExecutions,
+                                nonces[_subAccount]++
+                            )
+                        )
+                    )
+                ),
+                _v,
+                _r,
+                _s
+            );
+
+            if (recoveredAddress == address(0) || recoveredAddress != _subAccount) revert CM_InvalidSignature();
+        }
+
+        // update account access
+        uint160 maskedId = uint160(_subAccount) | 0xFF;
+        allowedExecutionLeft[maskedId][_actor] = _allowedExecutions;
+
+        emit AccountAuthorizationUpdate(maskedId, _actor, _allowedExecutions);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                Public Functions
+    //////////////////////////////////////////////////////////////*/
+
+    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+        return block.chainid == initialChainId ? initialDomainSeparator : _computeDomainSeparator();
     }
 
     /**
@@ -567,6 +655,8 @@ contract CrossMarginPhysicalEngine is
                 _mintOptionIntoAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.BurnShort) {
                 _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferLong) {
                 _transferLong(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.TransferShort) {
@@ -644,5 +734,17 @@ contract CrossMarginPhysicalEngine is
         else balances[index].amount += balance;
 
         return balances;
+    }
+
+    function _computeDomainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("Cross Margin Physical Engine"),
+                keccak256("1"),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 }
