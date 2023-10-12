@@ -86,7 +86,7 @@ contract CrossMarginPhysicalEngine is
     mapping(uint256 => SettlementTracker) public tokenTracker;
 
     /*///////////////////////////////////////////////////////////////
-                         State Variables V3
+                         State Variables V2
     //////////////////////////////////////////////////////////////*/
 
     /// @dev initial cached domain separator

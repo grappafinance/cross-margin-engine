@@ -45,7 +45,6 @@ CrossMarginPhysicalEngineSignedAccessTest:testRevertsOnMismatchingAccount() (gas
 CrossMarginPhysicalEngineSignedAccessTest:testRevertsOnNoSignature() (gas: 44018)
 CrossMarginPhysicalEngineSignedAccessTest:testUtils() (gas: 189)
 Deploy:testChill() (gas: 143)
-Deploy:testChill() (gas: 98)
 Deploy:testUtils() (gas: 121)
 DeployPhysicalMarginEngine:testChill() (gas: 165)
 DeployPhysicalMarginEngine:testUtils() (gas: 121)
