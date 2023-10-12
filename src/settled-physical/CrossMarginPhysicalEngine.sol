@@ -318,6 +318,29 @@ contract CrossMarginPhysicalEngine is
     }
 
     /**
+     * @notice get collateral amount available after margin requirements
+     * @param shorts positions.
+     * @param longs positions.
+     * @param collaterals balances.
+     * @return addresses array of collateral
+     * @return amounts array of collateral
+     * @return isUnderWater boolean if NOT enough collateral (underwater)
+     */
+    function previewCollateralAvailable(Position[] memory shorts, Position[] memory longs, Balance[] memory collaterals)
+        external
+        view
+        returns (address[] memory, uint256[] memory, bool)
+    {
+        CrossMarginAccount memory account;
+
+        account.shorts = shorts;
+        account.longs = longs;
+        account.collaterals = collaterals;
+
+        return _getCollateralAvailable(account);
+    }
+
+    /**
      * @notice  grant or revoke an account access to all your sub-accounts based on a signed message
      * @dev     expected to have a valid signature signed with account private key
      * @param   _subAccount account which grants the access
@@ -496,14 +519,27 @@ contract CrossMarginPhysicalEngine is
         // skip margin requirements check if no shorts
         if (account.shorts.length == 0) return true;
 
+        (,, bool isUnderWater) = _getCollateralAvailable(account);
+        return !isUnderWater;
+    }
+
+    /**
+     * @notice returns the amount collateral being used and if account is underwater.
+     * @param account to check
+     */
+    function _getCollateralAvailable(CrossMarginAccount memory account)
+        internal
+        view
+        returns (address[] memory addresses, uint256[] memory amounts, bool isUnderWater)
+    {
         Balance[] memory collaterals = account.collaterals;
         Balance[] memory requirements = _getMinCollateral(account);
 
         uint256 collatCount = collaterals.length;
 
         uint256[] memory masks;
-        uint256[] memory amounts = new uint256[](collatCount);
-        address[] memory addresses = new address[](collatCount);
+        amounts = new uint256[](collatCount);
+        addresses = new address[](collatCount);
 
         IOracle oracle;
 
@@ -543,7 +579,7 @@ contract CrossMarginPhysicalEngine is
                 uint256 marginValue = UintArrayLib.dot(amounts, masks) / UNIT;
 
                 // not enough collateral posted
-                if (marginValue < reqAmount) return false;
+                if (marginValue < reqAmount) isUnderWater = true;
 
                 // reserving collateral to prevent double counting
                 for (y = 0; y < collatCount; ++y) {
@@ -557,7 +593,7 @@ contract CrossMarginPhysicalEngine is
 
                         if (reqAmount == 0) break;
                     } else {
-                        amounts[y] = uint80(amounts[y] - (amounts[y] * reqAmount / marginValue));
+                        amounts[y] = amounts[y] - (amounts[y] * reqAmount / marginValue);
                         // reqAmount would now be set to zero,
                         // no longer need to reserve, so breaking
                         break;
@@ -565,8 +601,6 @@ contract CrossMarginPhysicalEngine is
                 }
             }
         }
-
-        return true;
     }
 
     /**
