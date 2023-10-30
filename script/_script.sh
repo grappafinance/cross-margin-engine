@@ -21,6 +21,11 @@ else
     exit 1
 fi
 
+echo "Resume? [y/n]..."
+read resume
+
+echo ""
+
 echo "Broadcast? [y/n]..."
 read broadcast
 
@@ -47,6 +52,11 @@ fi
 
 ARGS="--rpc-url https://$network.infura.io/v3/$INFURA_API_KEY"
 ARGS="$ARGS --private-key $PRIVATE_KEY"
+
+if [ "$resume" = "y" ]
+then
+  ARGS="$ARGS --resume"
+fi
 
 if [ "$broadcast" = "y" ]
 then
