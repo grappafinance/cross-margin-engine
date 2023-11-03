@@ -78,7 +78,7 @@ contract TestSettleOptionPartialMargin_CMC is CrossMarginCashFixture {
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
-        uint256 expectedPayout = (wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice * (depositAmount / UNIT);
+        uint256 expectedPayout = (wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice * depositAmount / UNIT;
 
         grappa.settleOption(alice, tokenId, amount);
 

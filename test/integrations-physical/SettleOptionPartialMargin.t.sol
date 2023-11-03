@@ -87,7 +87,7 @@ contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
-        uint256 expectedPayout = wethExpiryPrice * UNIT / lsEthExpiryPrice * (depositAmount / UNIT);
+        uint256 expectedPayout = wethExpiryPrice * UNIT / lsEthExpiryPrice * depositAmount / UNIT;
 
         pomace.settleOption(alice, tokenId, amount);
 
