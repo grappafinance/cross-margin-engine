@@ -14,6 +14,8 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
+import "forge-std/Console2.sol";
+
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleOptionPartialMargin_CMC is CrossMarginCashFixture {
     MockERC20 internal lsEth;
@@ -59,8 +61,8 @@ contract TestSettleOptionPartialMargin_CMC is CrossMarginCashFixture {
 
     function testCallITM() public {
         uint256 strikePrice = 4000 * UNIT;
-        uint256 amount = 1 * UNIT;
-        uint256 depositAmount = 1 * 1e18;
+        uint256 amount = 2.17 * 1e6; // aka UNIT
+        uint256 depositAmount = 3.14 * 1e18;
 
         uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
 
@@ -78,7 +80,7 @@ contract TestSettleOptionPartialMargin_CMC is CrossMarginCashFixture {
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
-        uint256 expectedPayout = (wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice * depositAmount / UNIT;
+        uint256 expectedPayout = ((wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice) * (1e18 / 1e6) * amount / UNIT;
 
         grappa.settleOption(alice, tokenId, amount);
 

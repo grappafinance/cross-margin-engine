@@ -69,8 +69,8 @@ contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {
 
     function testCall() public {
         uint256 strikePrice = 4000 * UNIT;
-        uint256 amount = 1 * UNIT;
-        uint256 depositAmount = 1 * 1e18;
+        uint256 amount = 2.17 * 1e6; // aka UNIT
+        uint256 depositAmount = 3.14 * 1e18;
 
         uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, exerciseWindow);
 
@@ -87,7 +87,7 @@ contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
-        uint256 expectedPayout = wethExpiryPrice * UNIT / lsEthExpiryPrice * depositAmount / UNIT;
+        uint256 expectedPayout = wethExpiryPrice * UNIT / lsEthExpiryPrice * (1e18 / 1e6) * amount / UNIT;
 
         pomace.settleOption(alice, tokenId, amount);
 
@@ -105,7 +105,7 @@ contract TestSettleOptionPartialMargin_CMP is CrossMarginPhysicalFixture {
         assertEq(collateralsAfter[0].collateralId, lsEthId);
         assertEq(collateralsAfter[0].amount, depositAmount - expectedPayout);
         assertEq(collateralsAfter[1].collateralId, usdcId);
-        assertEq(collateralsAfter[1].amount, 4000 * 1e6);
+        assertEq(collateralsAfter[1].amount, 4000e6 * amount / UNIT);
     }
 
     function testPut() public {
