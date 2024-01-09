@@ -451,7 +451,6 @@ contract CrossMarginPhysicalEngine is
         // decode tokenId
         (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
 
-        // grappa.trackTokenIssuance(tokenId, amount, true);
         tokenTracker[tokenId].issued += amount;
     }
 
@@ -461,6 +460,19 @@ contract CrossMarginPhysicalEngine is
      */
     function _burnOption(address _subAccount, bytes calldata _data) internal virtual override {
         super._burnOption(_subAccount, _data);
+
+        // decode parameters
+        (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
+
+        tokenTracker[tokenId].issued -= amount;
+    }
+
+    /**
+     * @dev burn option token from user margin account, decrease tracker issuance
+     * @param _data bytes data to decode
+     */
+    function _burnOptionFromAccount(address _subAccount, bytes calldata _data) internal virtual override {
+        super._burnOptionFromAccount(_subAccount, _data);
 
         // decode parameters
         (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
