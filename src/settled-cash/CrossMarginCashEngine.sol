@@ -148,51 +148,60 @@ contract CrossMarginCashEngine is
     }
 
     /*///////////////////////////////////////////////////////////////
-                    Override Upgrade Permission
+                        Execute and BatchExecute
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev Upgradable by the owner.
-     *
+     * @notice gets access status of an address
+     * @dev if whitelist address is not set, it ignores this
+     * @param _address address
      */
-    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
-        _checkOwner();
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                        External Functions
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice  sets the Collateralizable Mask for a pair of assets
-     * @param _asset0 the address of the asset 0
-     * @param _asset1 the address of the asset 1
-     * @param _value is margin-able
-     */
-    function setCollateralizable(address _asset0, address _asset1, bool _value) external {
-        _checkOwner();
-
-        uint256 collateralId = grappa.assetIds(_asset0);
-        uint256 mask = 1 << grappa.assetIds(_asset1);
-
-        if (_value) collateralizable[collateralId] |= mask;
-        else collateralizable[collateralId] &= ~mask;
-
-        emit CollateralizableSet(_asset0, _asset1, _value);
+    function _checkPermissioned(address _address) internal view {
+        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
     }
 
     /**
-     * @dev check if a pair of assets are collateralizable
+     * @notice execute multiple actions on one subAccounts
+     * @dev    also check access of msg.sender
      */
-    function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
-        return _isCollateralizable(grappa.assetIds(_asset0), grappa.assetIds(_asset1));
-    }
+    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
+        _assertCallerHasAccess(_subAccount);
 
-    /**
-     * @dev check if a pair of assets are collateralizable
-     */
-    function isCollateralizable(uint8 _asset0, uint8 _asset1) external view returns (bool) {
-        return _isCollateralizable(_asset0, _asset1);
+        // update the account storage and do external calls on the flight
+        for (uint256 i; i < actions.length;) {
+            if (actions[i].action == ActionType.AddCollateral) {
+                _addCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveCollateral) {
+                _removeCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShort) {
+                _mintOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
+                _mintOptionIntoAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShort) {
+                _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferLong) {
+                _transferLong(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferShort) {
+                _transferShort(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferCollateral) {
+                _transferCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.AddLong) {
+                _addOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveLong) {
+                _removeOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.SettleAccount) {
+                _settle(_subAccount);
+            } else {
+                revert CM_UnsupportedAction();
+            }
+
+            // increase i without checking overflow
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     /**
@@ -260,21 +269,6 @@ contract CrossMarginCashEngine is
     function getMinCollateral(address _subAccount) external view returns (Balance[] memory) {
         CrossMarginAccount memory account = accounts[_subAccount];
         return _getMinCollateral(account);
-    }
-
-    /**
-     * @notice  move an account to someone else
-     * @dev     expected to be call by account owner
-     * @param _subAccount the id of subaccount to transfer
-     * @param _newSubAccount the id of receiving account
-     */
-    function transferAccount(address _subAccount, address _newSubAccount) external {
-        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
-
-        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
-        accounts[_newSubAccount] = accounts[_subAccount];
-
-        delete accounts[_subAccount];
     }
 
     /**
@@ -563,58 +557,6 @@ contract CrossMarginCashEngine is
      * ========================================================= *
      */
 
-    /**
-     * @notice gets access status of an address
-     * @dev if whitelist address is not set, it ignores this
-     * @param _address address
-     */
-    function _checkPermissioned(address _address) internal view {
-        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
-    }
-
-    /**
-     * @notice execute multiple actions on one subAccounts
-     * @dev    also check access of msg.sender
-     */
-    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
-        _assertCallerHasAccess(_subAccount);
-
-        // update the account storage and do external calls on the flight
-        for (uint256 i; i < actions.length;) {
-            if (actions[i].action == ActionType.AddCollateral) {
-                _addCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveCollateral) {
-                _removeCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShort) {
-                _mintOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
-                _mintOptionIntoAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShort) {
-                _burnOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShortInAccount) {
-                _burnOptionFromAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferLong) {
-                _transferLong(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferShort) {
-                _transferShort(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferCollateral) {
-                _transferCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.AddLong) {
-                _addOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveLong) {
-                _removeOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.SettleAccount) {
-                _settle(_subAccount);
-            } else {
-                revert CM_UnsupportedAction();
-            }
-
-            // increase i without checking overflow
-            unchecked {
-                ++i;
-            }
-        }
-    }
 
     /**
      * @dev get minimum collateral requirement for an account
@@ -643,5 +585,72 @@ contract CrossMarginCashEngine is
                 address(this)
             )
         );
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        Collateralizable Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice  sets the Collateralizable Mask for a pair of assets
+     * @param _asset0 the address of the asset 0
+     * @param _asset1 the address of the asset 1
+     * @param _value is margin-able
+     */
+    function setCollateralizable(address _asset0, address _asset1, bool _value) external {
+        _checkOwner();
+
+        uint256 collateralId = grappa.assetIds(_asset0);
+        uint256 mask = 1 << grappa.assetIds(_asset1);
+
+        if (_value) collateralizable[collateralId] |= mask;
+        else collateralizable[collateralId] &= ~mask;
+
+        emit CollateralizableSet(_asset0, _asset1, _value);
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
+        return _isCollateralizable(grappa.assetIds(_asset0), grappa.assetIds(_asset1));
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(uint8 _asset0, uint8 _asset1) external view returns (bool) {
+        return _isCollateralizable(_asset0, _asset1);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    Transfer Account Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice  move an account to someone else
+     * @dev     expected to be call by account owner
+     * @param _subAccount the id of subaccount to transfer
+     * @param _newSubAccount the id of receiving account
+     */
+    function transferAccount(address _subAccount, address _newSubAccount) external {
+        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
+
+        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
+        accounts[_newSubAccount] = accounts[_subAccount];
+
+        delete accounts[_subAccount];
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    Override Upgrade Permission
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Upgradable by the owner.
+     *
+     */
+    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
+        _checkOwner();
     }
 }

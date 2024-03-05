@@ -129,20 +129,63 @@ contract CrossMarginPhysicalEngine is
     }
 
     /*///////////////////////////////////////////////////////////////
-                    Override Upgrade Permission
+                        Execute and BatchExecute
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev Upgradable by the owner.
-     *
+     * @notice gets access status of an address
+     * @dev if whitelist address is not set, it ignores this
+     * @param _address address
      */
-    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
-        _checkOwner();
+    function _checkPermissioned(address _address) internal view {
+        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
     }
 
-    /*///////////////////////////////////////////////////////////////
-                        External Functions
-    //////////////////////////////////////////////////////////////*/
+    /**
+     * @notice execute multiple actions on one subAccounts
+     * @dev    also check access of msg.sender
+     */
+    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
+        _assertCallerHasAccess(_subAccount);
+
+        // update the account storage and do external calls on the flight
+        for (uint256 i; i < actions.length;) {
+            if (actions[i].action == ActionType.AddCollateral) {
+                _addCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveCollateral) {
+                _removeCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShort) {
+                _mintOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
+                _mintOptionIntoAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShort) {
+                _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferLong) {
+                _transferLong(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferShort) {
+                _transferShort(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferCollateral) {
+                _transferCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.AddLong) {
+                _addOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveLong) {
+                _removeOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.ExerciseToken) {
+                _exerciseToken(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.SettleAccount) {
+                _settle(_subAccount);
+            } else {
+                revert CM_UnsupportedAction();
+            }
+
+            // increase i without checking overflow
+            unchecked {
+                ++i;
+            }
+        }
+    }
 
     /**
      * @notice batch execute on multiple subAccounts
@@ -267,21 +310,6 @@ contract CrossMarginPhysicalEngine is
     function getMinCollateral(address _subAccount) external view returns (Balance[] memory) {
         CrossMarginAccount memory account = accounts[_subAccount];
         return _getMinCollateral(account);
-    }
-
-    /**
-     * @notice  move an account to someone else
-     * @dev     expected to be call by account owner
-     * @param _subAccount the id of subaccount to transfer
-     * @param _newSubAccount the id of receiving account
-     */
-    function transferAccount(address _subAccount, address _newSubAccount) external {
-        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
-
-        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
-        accounts[_newSubAccount] = accounts[_subAccount];
-
-        delete accounts[_subAccount];
     }
 
     /**
@@ -635,61 +663,6 @@ contract CrossMarginPhysicalEngine is
      */
 
     /**
-     * @notice gets access status of an address
-     * @dev if whitelist address is not set, it ignores this
-     * @param _address address
-     */
-    function _checkPermissioned(address _address) internal view {
-        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
-    }
-
-    /**
-     * @notice execute multiple actions on one subAccounts
-     * @dev    also check access of msg.sender
-     */
-    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
-        _assertCallerHasAccess(_subAccount);
-
-        // update the account storage and do external calls on the flight
-        for (uint256 i; i < actions.length;) {
-            if (actions[i].action == ActionType.AddCollateral) {
-                _addCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveCollateral) {
-                _removeCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShort) {
-                _mintOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
-                _mintOptionIntoAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShort) {
-                _burnOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShortInAccount) {
-                _burnOptionFromAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferLong) {
-                _transferLong(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferShort) {
-                _transferShort(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferCollateral) {
-                _transferCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.AddLong) {
-                _addOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveLong) {
-                _removeOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.ExerciseToken) {
-                _exerciseToken(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.SettleAccount) {
-                _settle(_subAccount);
-            } else {
-                revert CM_UnsupportedAction();
-            }
-
-            // increase i without checking overflow
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    /**
      * @dev get minimum collateral requirement for an account
      */
     function _getMinCollateral(CrossMarginAccount memory account) internal view returns (Balance[] memory) {
@@ -753,5 +726,36 @@ contract CrossMarginPhysicalEngine is
                 address(this)
             )
         );
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        Transfer Account Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice  move an account to someone else
+     * @dev     expected to be call by account owner
+     * @param _subAccount the id of subaccount to transfer
+     * @param _newSubAccount the id of receiving account
+     */
+    function transferAccount(address _subAccount, address _newSubAccount) external {
+        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
+
+        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
+        accounts[_newSubAccount] = accounts[_subAccount];
+
+        delete accounts[_subAccount];
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    Override Upgrade Permission
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Upgradable by the owner.
+     *
+     */
+    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
+        _checkOwner();
     }
 }
