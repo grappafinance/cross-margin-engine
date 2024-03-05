@@ -84,7 +84,8 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
         address rolesAuthorityProxy = address(new RolesAuthorityProxy(implementation, initData));
         rolesAuthority = RolesAuthority(rolesAuthorityProxy);
 
-        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option), address(rolesAuthority))); // nonce 7
+        address engineImplementation =
+            address(new CrossMarginPhysicalEngine(address(pomace), address(option), address(rolesAuthority))); // nonce 7
         bytes memory engineData = abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, address(this));
         engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData))); // 8
         vm.label(address(engine), "CrossMarginPhysicalEngine");

@@ -12,8 +12,9 @@ contract DeployPhysicalMarginEngine is Script {
         vm.startBroadcast();
 
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation =
-            address(new CrossMarginPhysicalEngine(vm.envAddress("PomaceProxy"), vm.envAddress("PomaceOptionToken"), vm.envAddress("RolesAuthorityProxy")));
+        address engineImplementation = address(
+            new CrossMarginPhysicalEngine(vm.envAddress("PomaceProxy"), vm.envAddress("PomaceOptionToken"), vm.envAddress("RolesAuthorityProxy"))
+        );
 
         console.log("CrossMargin Physical Engine: \t\t", engineImplementation);
 
