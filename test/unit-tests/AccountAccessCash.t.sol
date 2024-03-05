@@ -105,22 +105,6 @@ contract CrossMarginCashEngineSignedAccessTest is CrossMarginCashFixture {
         assertEq(engine.allowedExecutionLeft(uint160(account) | 0xFF, address(this)), 0);
     }
 
-    function testCannotSetDomainSeperator() public {
-        vm.expectRevert();
-        engine.setDomainSeperator();
-    }
-
-    function testCanSetDomainSeperator() public {
-        bytes32 expected = engine.initialDomainSeparator();
-
-        uint256 slot = stdstore.target(address(engine)).sig("initialDomainSeparator()").find();
-        vm.store(address(engine), bytes32(slot), bytes32(0));
-
-        engine.setDomainSeperator();
-
-        assert(engine.initialDomainSeparator() == expected);
-    }
-
     function testCanSetAccess() public {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             privateKey,

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
+import {CrossMarginCashFixture, Role} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -27,8 +27,6 @@ contract Permissioned_CMC is CrossMarginCashFixture {
         weth.mint(address(this), 100 * 1e18);
         weth.approve(address(engine), type(uint256).max);
 
-        engine.setWhitelist(address(whitelist));
-
         depositAmount = 1 * 1e18;
 
         uint256 strikePrice = 4000 * UNIT;
@@ -43,6 +41,8 @@ contract Permissioned_CMC is CrossMarginCashFixture {
     }
 
     function testCannotExecute() public {
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, false);
+
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddCollateralAction(wethId, address(this), 1000 * UNIT);
 
@@ -51,8 +51,6 @@ contract Permissioned_CMC is CrossMarginCashFixture {
     }
 
     function testCanExecute() public {
-        whitelist.setEngineAccess(address(this), true);
-
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddCollateralAction(wethId, address(this), 1000 * UNIT);
 
@@ -63,7 +61,7 @@ contract Permissioned_CMC is CrossMarginCashFixture {
     }
 
     function testCannotSettleOption() public {
-        whitelist.setEngineAccess(address(this), true);
+        rolesAuthority.setUserRole(alice, Role.Investor_MFFeederDomestic, false);
 
         _mintOptionToAlice();
 
@@ -77,9 +75,6 @@ contract Permissioned_CMC is CrossMarginCashFixture {
     }
 
     function testAliceCanSettleOption() public {
-        whitelist.setEngineAccess(address(this), true);
-        whitelist.setEngineAccess(alice, true);
-
         _mintOptionToAlice();
 
         oracle.setExpiryPrice(address(weth), address(usdc), 5000 * UNIT);

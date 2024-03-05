@@ -12,6 +12,7 @@ import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
 import {AccountPhysicalEngine} from "./AccountPhysicalEngine.sol";
 
 // interfaces
+import {IAuthority} from "entitlements/src/interfaces/IAuthority.sol";
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
 import {IWhitelist} from "pomace/interfaces/IWhitelist.sol";
 import {IOracle} from "pomace/interfaces/IOracle.sol";
@@ -36,6 +37,7 @@ import {BatchExecute, ActionArgs} from "pomace/config/types.sol";
 import "pomace/config/enums.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
+import {Role} from "entitlements/src/config/enums.sol";
 
 /**
  * @title   CrossMarginPhysicalEngine
@@ -67,6 +69,9 @@ contract CrossMarginPhysicalEngine is
     /// @dev initial chain id used in domain separator
     uint256 public immutable initialChainId;
 
+    /// @notice authority to check entitlements
+    IAuthority public immutable authority;
+
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
@@ -80,7 +85,7 @@ contract CrossMarginPhysicalEngine is
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
     ///     checks recipient on payCashValue
-    IWhitelist public whitelist;
+    IWhitelist private _w;
 
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
@@ -101,8 +106,12 @@ contract CrossMarginPhysicalEngine is
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {
+    constructor(address _pomace, address _optionToken, address _authority) BaseEngine(_pomace, _optionToken) initializer {
+        // solhint-disable-next-line reason-string
+        if (_authority == address(0)) revert();
+
         initialChainId = block.chainid;
+        authority = IAuthority(_authority);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -134,22 +143,6 @@ contract CrossMarginPhysicalEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
-
-    function setDomainSeperator() external {
-        if (initialDomainSeparator != bytes32(0)) revert();
-
-        initialDomainSeparator = _computeDomainSeparator();
-    }
-
-    /**
-     * @notice Sets the whitelist contract
-     * @param _whitelist is the address of the new whitelist
-     */
-    function setWhitelist(address _whitelist) external {
-        _checkOwner();
-
-        whitelist = IWhitelist(_whitelist);
-    }
 
     /**
      * @notice batch execute on multiple subAccounts
@@ -244,6 +237,8 @@ contract CrossMarginPhysicalEngine is
      * @param _amount amount
      */
     function receiveDebtValue(address _asset, address _sender, uint256 _amount) external {
+        if (_sender == address(this)) return;
+
         _checkPermissioned(_sender);
 
         _receiveDebtValue(_asset, _sender, _amount);
@@ -645,7 +640,7 @@ contract CrossMarginPhysicalEngine is
      * @param _address address
      */
     function _checkPermissioned(address _address) internal view {
-        if (address(whitelist) != address(0) && !whitelist.isAllowed(_address)) revert NoAccess();
+        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
     }
 
     /**

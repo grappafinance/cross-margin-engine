@@ -21,16 +21,20 @@ contract DeployPhysicalMarginEngine is Script, Utilities {
 
         address pomace = vm.envAddress("PomaceProxy");
         address optionToken = vm.envAddress("PomaceOptionToken");
+        address authority = vm.envAddress("RolesAuthorityProxy");
 
         // deploy and register Cross Margin Engine
-        deployCrossMarginPhysicalEngine(pomace, optionToken);
+        deployCrossMarginPhysicalEngine(pomace, optionToken, authority);
 
         vm.stopBroadcast();
     }
 
-    function deployCrossMarginPhysicalEngine(address pomace, address optionToken) public returns (address crossMarginEngine) {
+    function deployCrossMarginPhysicalEngine(address pomace, address optionToken, address authority)
+        public
+        returns (address crossMarginEngine)
+    {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginPhysicalEngine(pomace, optionToken));
+        address engineImplementation = address(new CrossMarginPhysicalEngine(pomace, optionToken, authority));
         bytes memory engineData =
             abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
         console.logBytes(engineData);

@@ -9,9 +9,13 @@ import {Grappa} from "grappa/core/Grappa.sol";
 import "grappa/core/GrappaProxy.sol";
 import "grappa/core/CashOptionToken.sol";
 
+import {RolesAuthority} from "entitlements/src/core/RolesAuthority.sol";
+import {RolesAuthorityProxy} from "entitlements/src/core/RolesAuthorityProxy.sol";
+import {Role} from "entitlements/src/config/enums.sol";
+import {MockSanctions} from "entitlements/test/mocks/MockSanctions.sol";
+
 // Mocks
 import "../mocks/MockERC20.sol";
-import "../mocks/MockWhitelist.sol";
 import "grappa-test/mocks/MockOracle.sol";
 
 // Types
@@ -34,12 +38,13 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
     Grappa internal grappa;
     CashOptionToken internal option;
 
+    RolesAuthority public rolesAuthority;
+    MockSanctions internal sanctions;
+
     MockERC20 internal usdc;
     MockERC20 internal weth;
 
     MockOracle internal oracle;
-
-    MockWhitelist internal whitelist;
 
     address internal alice;
     address internal charlie;
@@ -68,22 +73,21 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
 
         // predict address of margin account and use it here
         address grappaAddr = predictAddress(address(this), 6);
-
         option = new CashOptionToken(grappaAddr, address(0)); // nonce: 4
-
         address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
-
         bytes memory grappaData = abi.encodeWithSelector(Grappa.initialize.selector, address(this));
-
         grappa = Grappa(address(new GrappaProxy(grappaImplementation, grappaData))); // 6
 
-        address engineImplementation = address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle))); // nonce 7
+        sanctions = new MockSanctions();
+        address implementation = address(new RolesAuthority(address(sanctions)));
+        bytes memory initData = abi.encodeWithSelector(RolesAuthority.initialize.selector, address(this));
+        address rolesAuthorityProxy = address(new RolesAuthorityProxy(implementation, initData));
+        rolesAuthority = RolesAuthority(rolesAuthorityProxy);
 
+        address engineImplementation =
+            address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle), address(rolesAuthority))); // nonce 7
         bytes memory engineData = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
-
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(engineImplementation, engineData))); // 8
-
-        whitelist = new MockWhitelist();
 
         // register products
         usdcId = grappa.registerAsset(address(usdc));
@@ -111,6 +115,12 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
         usdc.mint(alice, 1000_000_000 * 1e6);
         usdc.mint(bob, 1000_000_000 * 1e6);
         usdc.mint(charlie, 1000_000_000 * 1e6);
+
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, true);
+        rolesAuthority.setUserRole(alice, Role.Investor_MFFeederDomestic, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.execute.selector, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.batchExecute.selector, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.payCashValue.selector, true);
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external virtual returns (bytes4) {

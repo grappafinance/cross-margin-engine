@@ -26,3 +26,6 @@
 	# set to commit 9e4440c on branch master
 	path = lib/core-cash
 	url = https://github.com/grappafinance/core-cash
+[submodule "lib/entitlements"]
+	path = lib/entitlements
+	url = https://github.com/Hashnotefi/entitlements
