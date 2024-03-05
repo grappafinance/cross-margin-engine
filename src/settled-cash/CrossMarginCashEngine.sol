@@ -557,7 +557,6 @@ contract CrossMarginCashEngine is
      * ========================================================= *
      */
 
-
     /**
      * @dev get minimum collateral requirement for an account
      */
