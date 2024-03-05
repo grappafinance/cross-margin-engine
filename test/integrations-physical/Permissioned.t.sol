@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
+import {CrossMarginPhysicalFixture, Role} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -25,8 +25,6 @@ contract Permissioned_CMP is CrossMarginPhysicalFixture {
         weth.mint(address(this), 100 * 1e18);
         weth.approve(address(engine), type(uint256).max);
 
-        engine.setWhitelist(address(whitelist));
-
         depositAmount = 1 * 1e18;
 
         uint256 strikePrice = 4000 * UNIT;
@@ -40,6 +38,8 @@ contract Permissioned_CMP is CrossMarginPhysicalFixture {
     }
 
     function testCannotExecute() public {
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, false);
+
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddCollateralAction(wethId, address(this), 1000 * UNIT);
 
@@ -48,8 +48,6 @@ contract Permissioned_CMP is CrossMarginPhysicalFixture {
     }
 
     function testCanExecute() public {
-        whitelist.setEngineAccess(address(this), true);
-
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddCollateralAction(wethId, address(this), 1000 * UNIT);
 
@@ -60,7 +58,7 @@ contract Permissioned_CMP is CrossMarginPhysicalFixture {
     }
 
     function testCannotSettleOption() public {
-        whitelist.setEngineAccess(address(this), true);
+        rolesAuthority.setUserRole(alice, Role.Investor_MFFeederDomestic, false);
 
         _mintOptionToAlice();
 
@@ -72,9 +70,6 @@ contract Permissioned_CMP is CrossMarginPhysicalFixture {
     }
 
     function testAliceCanSettleOption() public {
-        whitelist.setEngineAccess(address(this), true);
-        whitelist.setEngineAccess(alice, true);
-
         vm.prank(alice);
         usdc.approve(address(engine), type(uint256).max);
 

@@ -125,6 +125,8 @@ contract CrossMarginCashEngine is
     {
         // solhint-disable-next-line reason-string
         if (_oracle == address(0)) revert();
+        // solhint-disable-next-line reason-string
+        if (_authority == address(0)) revert();
 
         initialChainId = block.chainid;
         oracle = IOracle(_oracle);

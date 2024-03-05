@@ -9,9 +9,13 @@ import {Pomace} from "pomace/core/Pomace.sol";
 import "pomace/core/PomaceProxy.sol";
 import "pomace/core/PhysicalOptionToken.sol";
 
+import {RolesAuthority} from "entitlements/src/core/RolesAuthority.sol";
+import {RolesAuthorityProxy} from "entitlements/src/core/RolesAuthorityProxy.sol";
+import {Role} from "entitlements/src/config/enums.sol";
+import {MockSanctions} from "entitlements/test/mocks/MockSanctions.sol";
+
 // Mocks
 import "../mocks/MockERC20.sol";
-import {MockWhitelist} from "../mocks/MockWhitelist.sol";
 import "pomace-test/mocks/MockOracle.sol";
 
 import {ActionArgs} from "pomace/config/types.sol";
@@ -33,12 +37,13 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
     Pomace internal pomace;
     PhysicalOptionToken internal option;
 
+    RolesAuthority public rolesAuthority;
+    MockSanctions internal sanctions;
+
     MockERC20 internal usdc;
     MockERC20 internal weth;
 
     MockOracle internal oracle;
-
-    MockWhitelist internal whitelist;
 
     address internal alice;
     address internal charlie;
@@ -66,26 +71,23 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
 
         // predict address of margin account and use it here
         address pomaceAddr = predictAddress(address(this), 6);
-
         option = new PhysicalOptionToken(pomaceAddr, address(0)); // nonce: 4
         vm.label(address(option), "PhysicalOptionToken");
-
         address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
-
         bytes memory pomaceData = abi.encodeWithSelector(Pomace.initialize.selector, address(this));
-
         pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 6
         vm.label(address(pomace), "Pomace");
 
-        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option))); // nonce 7
+        sanctions = new MockSanctions();
+        address implementation = address(new RolesAuthority(address(sanctions)));
+        bytes memory initData = abi.encodeWithSelector(RolesAuthority.initialize.selector, address(this));
+        address rolesAuthorityProxy = address(new RolesAuthorityProxy(implementation, initData));
+        rolesAuthority = RolesAuthority(rolesAuthorityProxy);
 
+        address engineImplementation = address(new CrossMarginPhysicalEngine(address(pomace), address(option), address(rolesAuthority))); // nonce 7
         bytes memory engineData = abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, address(this));
-
         engine = CrossMarginPhysicalEngine(address(new CrossMarginPhysicalEngineProxy(engineImplementation, engineData))); // 8
         vm.label(address(engine), "CrossMarginPhysicalEngine");
-
-        whitelist = new MockWhitelist();
-        vm.label(address(whitelist), "Whitelist");
 
         // register products
         usdcId = pomace.registerAsset(address(usdc));
@@ -111,6 +113,14 @@ abstract contract CrossMarginPhysicalFixture is Test, ActionHelper, Utilities {
         usdc.mint(alice, 1000_000_000 * 1e6);
         usdc.mint(bob, 1000_000_000 * 1e6);
         usdc.mint(charlie, 1000_000_000 * 1e6);
+
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, true);
+        rolesAuthority.setUserRole(alice, Role.Investor_MFFeederDomestic, true);
+        rolesAuthority.setUserRole(bob, Role.Investor_MFFeederDomestic, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.execute.selector, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.batchExecute.selector, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.receiveDebtValue.selector, true);
+        rolesAuthority.setRoleCapability(Role.Investor_MFFeederDomestic, address(engine), engine.sendPayoutValue.selector, true);
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external virtual returns (bytes4) {
