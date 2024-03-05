@@ -12,6 +12,7 @@ import {BaseEngine} from "grappa/core/engines/BaseEngine.sol";
 import {AccountCashEngine} from "./AccountCashEngine.sol";
 
 // interfaces
+import {IAuthority} from "entitlements/src/interfaces/IAuthority.sol";
 import {IMarginEngine} from "grappa/interfaces/IMarginEngine.sol";
 import {IOracle} from "grappa/interfaces/IOracle.sol";
 import {IWhitelist} from "../interfaces/IWhitelist.sol";
@@ -36,6 +37,7 @@ import {BatchExecute, ActionArgs} from "grappa/config/types.sol";
 import "grappa/config/enums.sol";
 import "grappa/config/constants.sol";
 import "grappa/config/errors.sol";
+import {Role} from "entitlements/src/config/enums.sol";
 
 /**
  * @title   CrossMarginCashEngine
@@ -70,6 +72,9 @@ contract CrossMarginCashEngine is
     /// @dev oracle to handle partial margining
     IOracle public immutable oracle;
 
+    /// @notice authority to check entitlements
+    IAuthority public immutable authority;
+
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
@@ -83,7 +88,7 @@ contract CrossMarginCashEngine is
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
     ///     checks recipient on payCashValue
-    IWhitelist public whitelist;
+    IWhitelist private _w;
 
     /*///////////////////////////////////////////////////////////////
                          State Variables V2
@@ -114,12 +119,13 @@ contract CrossMarginCashEngine is
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _grappa, address _optionToken, address _oracle) BaseEngine(_grappa, _optionToken) initializer {
+    constructor(address _grappa, address _optionToken, address _oracle, address _authority) BaseEngine(_grappa, _optionToken) initializer {
         // solhint-disable-next-line reason-string
         if (_oracle == address(0)) revert();
 
         initialChainId = block.chainid;
         oracle = IOracle(_oracle);
+        authority = IAuthority(_authority);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -151,22 +157,6 @@ contract CrossMarginCashEngine is
     /*///////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
-
-    function setDomainSeperator() external {
-        if (initialDomainSeparator != bytes32(0)) revert();
-
-        initialDomainSeparator = _computeDomainSeparator();
-    }
-
-    /**
-     * @notice Sets the whitelist contract
-     * @param _whitelist is the address of the new whitelist
-     */
-    function setWhitelist(address _whitelist) external {
-        _checkOwner();
-
-        whitelist = IWhitelist(_whitelist);
-    }
 
     /**
      * @notice  sets the Collateralizable Mask for a pair of assets
@@ -574,7 +564,7 @@ contract CrossMarginCashEngine is
      * @param _address address
      */
     function _checkPermissioned(address _address) internal view {
-        if (address(whitelist) != address(0) && !whitelist.isAllowed(_address)) revert NoAccess();
+        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
     }
 
     /**
