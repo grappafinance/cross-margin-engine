@@ -84,7 +84,8 @@ abstract contract CrossMarginCashFixture is Test, ActionHelper, Utilities {
         address rolesAuthorityProxy = address(new RolesAuthorityProxy(implementation, initData));
         rolesAuthority = RolesAuthority(rolesAuthorityProxy);
 
-        address engineImplementation = address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle), address(rolesAuthority))); // nonce 7
+        address engineImplementation =
+            address(new CrossMarginCashEngine(address(grappa), address(option), address(oracle), address(rolesAuthority))); // nonce 7
         bytes memory engineData = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(engineImplementation, engineData))); // 8
 

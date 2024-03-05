@@ -119,7 +119,10 @@ contract CrossMarginCashEngine is
                 Constructor for implementation Contract
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _grappa, address _optionToken, address _oracle, address _authority) BaseEngine(_grappa, _optionToken) initializer {
+    constructor(address _grappa, address _optionToken, address _oracle, address _authority)
+        BaseEngine(_grappa, _optionToken)
+        initializer
+    {
         // solhint-disable-next-line reason-string
         if (_oracle == address(0)) revert();
 

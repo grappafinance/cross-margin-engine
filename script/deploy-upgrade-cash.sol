@@ -22,8 +22,9 @@ contract Deploy is Script {
 
     function deployCrossMarginEngine(address grappa, address optionToken) public {
         // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation =
-            address(new CrossMarginCashEngine(address(grappa), optionToken, vm.envAddress("CrossMarginCashOracle"), vm.envAddress("RolesAuthorityProxy")));
+        address engineImplementation = address(
+            new CrossMarginCashEngine(address(grappa), optionToken, vm.envAddress("CrossMarginCashOracle"), vm.envAddress("RolesAuthorityProxy"))
+        );
 
         console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);
     }
