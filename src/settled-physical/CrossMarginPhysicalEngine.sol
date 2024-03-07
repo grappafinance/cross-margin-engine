@@ -81,7 +81,7 @@ contract CrossMarginPhysicalEngine is
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
 
-    ///@dev contract that verifies permissions
+    ///@dev ***DEPRECATED*** contract that verifies permissions
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
     ///     checks recipient on payCashValue
@@ -667,6 +667,14 @@ contract CrossMarginPhysicalEngine is
      */
     function _getMinCollateral(CrossMarginAccount memory account) internal view returns (Balance[] memory) {
         return CrossMarginPhysicalMath.getMinCollateralForPositions(pomace, account.shorts, account.longs);
+    }
+
+    function _assertCallerHasAccess(address _subAccount) internal override {
+        if (_isPrimaryAccountFor(msg.sender, _subAccount)) return;
+
+        if (!authority.doesUserHaveRole(tx.origin, Role.System_FundAdmin)) {
+            super._assertCallerHasAccess(_subAccount);
+        }
     }
 
     /**

@@ -84,7 +84,7 @@ contract CrossMarginCashEngine is
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
 
-    ///@dev contract that verifies permissions
+    ///@dev ***DEPRECATED*** contract that verifies permissions
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
     ///     checks recipient on payCashValue
@@ -564,14 +564,12 @@ contract CrossMarginCashEngine is
         return CrossMarginCashMath.getMinCollateralForPositions(grappa, account.shorts, account.longs);
     }
 
-    /**
-     * @dev check if a pair of assetIds are collateralizable
-     */
-    function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
-        if (_assetId0 == _assetId1) return true;
+    function _assertCallerHasAccess(address _subAccount) internal override {
+        if (_isPrimaryAccountFor(msg.sender, _subAccount)) return;
 
-        uint256 mask = 1 << _assetId1;
-        return collateralizable[_assetId0] & mask != 0;
+        if (!authority.doesUserHaveRole(tx.origin, Role.System_FundAdmin)) {
+            super._assertCallerHasAccess(_subAccount);
+        }
     }
 
     function _computeDomainSeparator() internal view returns (bytes32) {
@@ -589,6 +587,16 @@ contract CrossMarginCashEngine is
     /*///////////////////////////////////////////////////////////////
                         Collateralizable Functions
     //////////////////////////////////////////////////////////////*/
+
+     /**
+     * @dev check if a pair of assetIds are collateralizable
+     */
+    function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
+        if (_assetId0 == _assetId1) return true;
+
+        uint256 mask = 1 << _assetId1;
+        return collateralizable[_assetId0] & mask != 0;
+    }
 
     /**
      * @notice  sets the Collateralizable Mask for a pair of assets

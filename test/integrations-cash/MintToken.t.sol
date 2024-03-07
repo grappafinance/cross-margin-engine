@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
+import {CrossMarginCashFixture, Role} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/enums.sol";
@@ -66,6 +66,30 @@ contract TestMint_CMC is CrossMarginCashFixture {
         engine.execute(address(this), actions);
 
         (Position[] memory shorts,,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(shorts[0].amount, amount);
+
+        assertEq(option.balanceOf(address(this), tokenId), amount);
+    }
+
+    function testCanMintOnBehalfOf() public {
+        rolesAuthority.setUserRole(tx.origin, Role.System_FundAdmin, true);
+
+        uint256 depositAmount = 2000 * 1e6;
+
+        uint256 strikePrice = 2000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        actions[1] = createMintAction(tokenId, address(this), amount);
+        engine.execute(alice, actions);
+
+        (Position[] memory shorts,,) = engine.marginAccounts(alice);
 
         assertEq(shorts.length, 1);
         assertEq(shorts[0].tokenId, tokenId);
