@@ -588,7 +588,7 @@ contract CrossMarginCashEngine is
                         Collateralizable Functions
     //////////////////////////////////////////////////////////////*/
 
-     /**
+    /**
      * @dev check if a pair of assetIds are collateralizable
      */
     function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
