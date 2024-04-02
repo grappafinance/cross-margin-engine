@@ -78,7 +78,9 @@ contract PhysicalEngineProxyTest is Test {
         // create a new engine proxy with the same implementation
         CrossMarginPhysicalEngine engine2 = CrossMarginPhysicalEngine(
             address(
-                new CrossMarginPhysicalEngineProxy(address(implementation), abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, address(this)))
+                new CrossMarginPhysicalEngineProxy(
+                    address(implementation), abi.encodeWithSelector(CrossMarginPhysicalEngine.initialize.selector, address(this))
+                )
             )
         );
 

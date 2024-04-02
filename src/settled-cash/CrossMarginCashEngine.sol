@@ -405,7 +405,6 @@ contract CrossMarginCashEngine is
      *               Override Sate changing functions             *
      * ========================================================= *
      */
-
     function _addCollateralToAccount(address _subAccount, uint8 collateralId, uint80 amount) internal override {
         accounts[_subAccount].addCollateral(collateralId, amount);
     }
