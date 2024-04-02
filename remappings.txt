@@ -7,3 +7,4 @@ pomace=lib/core-physical/src/
 grappa=lib/core-cash/src/
 grappa-test=lib/core-cash/test/
 pomace-test=lib/core-physical/test/
+entitlements/=lib/entitlements/

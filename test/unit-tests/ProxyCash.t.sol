@@ -21,7 +21,7 @@ contract CashEngineProxyTest is Test {
     CrossMarginCashEngine public engine;
 
     constructor() {
-        implementation = new CrossMarginCashEngine(address(0), address(0), address(0x01));
+        implementation = new CrossMarginCashEngine(address(0), address(0), address(0x01), address(0x02));
         bytes memory data = abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this));
 
         engine = CrossMarginCashEngine(address(new CrossMarginCashEngineProxy(address(implementation), data)));
@@ -79,7 +79,9 @@ contract CashEngineProxyTest is Test {
         // create a new engine proxy with the same implementation
         CrossMarginCashEngine engine2 = CrossMarginCashEngine(
             address(
-                new CrossMarginCashEngineProxy(address(implementation), abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this)))
+                new CrossMarginCashEngineProxy(
+                    address(implementation), abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this))
+                )
             )
         );
 

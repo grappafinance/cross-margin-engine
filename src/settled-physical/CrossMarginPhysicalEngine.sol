@@ -12,6 +12,7 @@ import {BaseEngine} from "pomace/core/engines/BaseEngine.sol";
 import {AccountPhysicalEngine} from "./AccountPhysicalEngine.sol";
 
 // interfaces
+import {IAuthority} from "entitlements/src/interfaces/IAuthority.sol";
 import {IMarginEngine} from "pomace/interfaces/IMarginEngine.sol";
 import {IWhitelist} from "pomace/interfaces/IWhitelist.sol";
 import {IOracle} from "pomace/interfaces/IOracle.sol";
@@ -36,6 +37,7 @@ import {BatchExecute, ActionArgs} from "pomace/config/types.sol";
 import "pomace/config/enums.sol";
 import "pomace/config/constants.sol";
 import "pomace/config/errors.sol";
+import {Role} from "entitlements/src/config/enums.sol";
 
 /**
  * @title   CrossMarginPhysicalEngine
@@ -67,6 +69,9 @@ contract CrossMarginPhysicalEngine is
     /// @dev initial chain id used in domain separator
     uint256 public immutable initialChainId;
 
+    /// @notice authority to check entitlements
+    IAuthority public immutable authority;
+
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
     //////////////////////////////////////////////////////////////*/
@@ -76,11 +81,11 @@ contract CrossMarginPhysicalEngine is
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
 
-    ///@dev contract that verifies permissions
+    ///@dev ***DEPRECATED*** contract that verifies permissions
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
     ///     checks recipient on payCashValue
-    IWhitelist public whitelist;
+    IWhitelist private _w;
 
     /// @dev token => SettlementTracker
     mapping(uint256 => SettlementTracker) public tokenTracker;
@@ -101,8 +106,12 @@ contract CrossMarginPhysicalEngine is
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {
+    constructor(address _pomace, address _optionToken, address _authority) BaseEngine(_pomace, _optionToken) initializer {
+        // solhint-disable-next-line reason-string
+        if (_authority == address(0)) revert();
+
         initialChainId = block.chainid;
+        authority = IAuthority(_authority);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -120,35 +129,62 @@ contract CrossMarginPhysicalEngine is
     }
 
     /*///////////////////////////////////////////////////////////////
-                    Override Upgrade Permission
+                        Execute and BatchExecute
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev Upgradable by the owner.
-     *
+     * @notice gets access status of an address
+     * @dev if whitelist address is not set, it ignores this
+     * @param _address address
      */
-    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
-        _checkOwner();
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                        External Functions
-    //////////////////////////////////////////////////////////////*/
-
-    function setDomainSeperator() external {
-        if (initialDomainSeparator != bytes32(0)) revert();
-
-        initialDomainSeparator = _computeDomainSeparator();
+    function _checkPermissioned(address _address) internal view {
+        if (!authority.canCall(_address, address(this), msg.sig)) revert NoAccess();
     }
 
     /**
-     * @notice Sets the whitelist contract
-     * @param _whitelist is the address of the new whitelist
+     * @notice execute multiple actions on one subAccounts
+     * @dev    also check access of msg.sender
      */
-    function setWhitelist(address _whitelist) external {
-        _checkOwner();
+    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
+        _assertCallerHasAccess(_subAccount);
 
-        whitelist = IWhitelist(_whitelist);
+        // update the account storage and do external calls on the flight
+        for (uint256 i; i < actions.length;) {
+            if (actions[i].action == ActionType.AddCollateral) {
+                _addCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveCollateral) {
+                _removeCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShort) {
+                _mintOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
+                _mintOptionIntoAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShort) {
+                _burnOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.BurnShortInAccount) {
+                _burnOptionFromAccount(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferLong) {
+                _transferLong(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferShort) {
+                _transferShort(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.TransferCollateral) {
+                _transferCollateral(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.AddLong) {
+                _addOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.RemoveLong) {
+                _removeOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.ExerciseToken) {
+                _exerciseToken(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.SettleAccount) {
+                _settle(_subAccount);
+            } else {
+                revert CM_UnsupportedAction();
+            }
+
+            // increase i without checking overflow
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     /**
@@ -244,6 +280,8 @@ contract CrossMarginPhysicalEngine is
      * @param _amount amount
      */
     function receiveDebtValue(address _asset, address _sender, uint256 _amount) external {
+        if (_sender == address(this)) return;
+
         _checkPermissioned(_sender);
 
         _receiveDebtValue(_asset, _sender, _amount);
@@ -272,21 +310,6 @@ contract CrossMarginPhysicalEngine is
     function getMinCollateral(address _subAccount) external view returns (Balance[] memory) {
         CrossMarginAccount memory account = accounts[_subAccount];
         return _getMinCollateral(account);
-    }
-
-    /**
-     * @notice  move an account to someone else
-     * @dev     expected to be call by account owner
-     * @param _subAccount the id of subaccount to transfer
-     * @param _newSubAccount the id of receiving account
-     */
-    function transferAccount(address _subAccount, address _newSubAccount) external {
-        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
-
-        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
-        accounts[_newSubAccount] = accounts[_subAccount];
-
-        delete accounts[_subAccount];
     }
 
     /**
@@ -640,65 +663,18 @@ contract CrossMarginPhysicalEngine is
      */
 
     /**
-     * @notice gets access status of an address
-     * @dev if whitelist address is not set, it ignores this
-     * @param _address address
-     */
-    function _checkPermissioned(address _address) internal view {
-        if (address(whitelist) != address(0) && !whitelist.isAllowed(_address)) revert NoAccess();
-    }
-
-    /**
-     * @notice execute multiple actions on one subAccounts
-     * @dev    also check access of msg.sender
-     */
-    function _execute(address _subAccount, ActionArgs[] calldata actions) internal {
-        _assertCallerHasAccess(_subAccount);
-
-        // update the account storage and do external calls on the flight
-        for (uint256 i; i < actions.length;) {
-            if (actions[i].action == ActionType.AddCollateral) {
-                _addCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveCollateral) {
-                _removeCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShort) {
-                _mintOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.MintShortIntoAccount) {
-                _mintOptionIntoAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShort) {
-                _burnOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.BurnShortInAccount) {
-                _burnOptionFromAccount(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferLong) {
-                _transferLong(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferShort) {
-                _transferShort(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.TransferCollateral) {
-                _transferCollateral(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.AddLong) {
-                _addOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.RemoveLong) {
-                _removeOption(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.ExerciseToken) {
-                _exerciseToken(_subAccount, actions[i].data);
-            } else if (actions[i].action == ActionType.SettleAccount) {
-                _settle(_subAccount);
-            } else {
-                revert CM_UnsupportedAction();
-            }
-
-            // increase i without checking overflow
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    /**
      * @dev get minimum collateral requirement for an account
      */
     function _getMinCollateral(CrossMarginAccount memory account) internal view returns (Balance[] memory) {
         return CrossMarginPhysicalMath.getMinCollateralForPositions(pomace, account.shorts, account.longs);
+    }
+
+    function _assertCallerHasAccess(address _subAccount) internal override {
+        if (_isPrimaryAccountFor(msg.sender, _subAccount)) return;
+
+        if (!authority.doesUserHaveRole(tx.origin, Role.System_FundAdmin)) {
+            super._assertCallerHasAccess(_subAccount);
+        }
     }
 
     /**
@@ -758,5 +734,36 @@ contract CrossMarginPhysicalEngine is
                 address(this)
             )
         );
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        Transfer Account Functions
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice  move an account to someone else
+     * @dev     expected to be call by account owner
+     * @param _subAccount the id of subaccount to transfer
+     * @param _newSubAccount the id of receiving account
+     */
+    function transferAccount(address _subAccount, address _newSubAccount) external {
+        if (!_isPrimaryAccountFor(msg.sender, _subAccount)) revert NoAccess();
+
+        if (!accounts[_newSubAccount].isEmpty()) revert CM_AccountIsNotEmpty();
+        accounts[_newSubAccount] = accounts[_subAccount];
+
+        delete accounts[_subAccount];
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    Override Upgrade Permission
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Upgradable by the owner.
+     *
+     */
+    function _authorizeUpgrade(address /*newImplementation*/ ) internal view override {
+        _checkOwner();
     }
 }
