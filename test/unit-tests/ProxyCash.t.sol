@@ -79,7 +79,9 @@ contract CashEngineProxyTest is Test {
         // create a new engine proxy with the same implementation
         CrossMarginCashEngine engine2 = CrossMarginCashEngine(
             address(
-                new CrossMarginCashEngineProxy(address(implementation), abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this)))
+                new CrossMarginCashEngineProxy(
+                    address(implementation), abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, address(this))
+                )
             )
         );
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
+import {CrossMarginPhysicalFixture, Role} from "./CrossMarginPhysicalFixture.t.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -61,6 +61,30 @@ contract TestMint_CMP is CrossMarginPhysicalFixture {
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        actions[1] = createMintAction(tokenId, address(this), amount);
+        engine.execute(address(this), actions);
+
+        (Position[] memory shorts,,) = engine.marginAccounts(address(this));
+
+        assertEq(shorts.length, 1);
+        assertEq(shorts[0].tokenId, tokenId);
+        assertEq(shorts[0].amount, amount);
+
+        assertEq(option.balanceOf(address(this), tokenId), amount);
+    }
+
+    function testCanMintOnBehalfOf() public {
+        rolesAuthority.setUserRole(tx.origin, Role.System_FundAdmin, true);
+
+        uint256 depositAmount = 1 * 1e18;
+
+        uint256 strikePrice = 4000 * UNIT;
+        uint256 amount = 1 * UNIT;
+
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, exerciseWindow);
+
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
         actions[1] = createMintAction(tokenId, address(this), amount);
         engine.execute(address(this), actions);
 
