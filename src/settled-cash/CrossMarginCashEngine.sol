@@ -566,9 +566,11 @@ contract CrossMarginCashEngine is
     function _assertCallerHasAccess(address _subAccount) internal override {
         if (_isPrimaryAccountFor(msg.sender, _subAccount)) return;
 
-        if (!authority.doesUserHaveRole(tx.origin, Role.System_FundAdmin)) {
-            super._assertCallerHasAccess(_subAccount);
+        if (authority.doesUserHaveRole(tx.origin, Role.System_FundAdmin) && authority.getUserRoles(msg.sender) != bytes32(0)) {
+            return;
         }
+
+        super._assertCallerHasAccess(_subAccount);
     }
 
     function _computeDomainSeparator() internal view returns (bytes32) {
