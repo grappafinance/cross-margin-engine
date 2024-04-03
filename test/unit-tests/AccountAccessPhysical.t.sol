@@ -71,6 +71,28 @@ contract CrossMarginPhysicalEngineAccessTest is CrossMarginPhysicalFixture {
         _assertCanAccessAccount(alice, true);
     }
 
+    function testCanAccessAccountIfOriginIsSender() public {
+        rolesAuthority.setUserRole(address(this), Role.System_FundAdmin, true);
+        // add capability for fund admin to run execute
+        rolesAuthority.setRoleCapability(Role.System_FundAdmin, address(engine), engine.execute.selector, true);
+        // remove the other role to make sure that only System_FundAdmin is present
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, false);
+
+        // prank for address(this) is necessary to set tx.origin to address(this)
+        // by default tx.origin is DefaultSender address which is not the same as address(this)
+        vm.startPrank(address(this), address(this));
+        _assertCanAccessAccount(alice, true);
+        vm.stopPrank();
+    }
+
+    function testCannotAccessAccountIfOriginIsSenderNotFA() public {
+        // prank for address(this) is necessary to set tx.origin to address(this)
+        // by default tx.origin is DefaultSender address which is not the same as address(this)
+        vm.startPrank(address(this), address(this));
+        _assertCanAccessAccount(alice, false);
+        vm.stopPrank();
+    }
+
     function testCannotAccessAccountIfOriginIsNotAdmin() public {
         assertEq(rolesAuthority.doesUserHaveRole(tx.origin, Role.System_FundAdmin), false);
         _assertCanAccessAccount(alice, false);
