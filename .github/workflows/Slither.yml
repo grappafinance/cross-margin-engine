@@ -3,15 +3,18 @@ name: Slither Analysis
 # temporarily disabled because of the action bug
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   analyze-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          token: ${{ secrets.CI_PAT }}
 
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
@@ -20,14 +23,14 @@ jobs:
 
       - name: Install dependencies
         run: forge install
-        
+
       - name: Run Slither core
         uses: crytic/slither-action@v0.2.0
         continue-on-error: true
         id: slither
         with:
-          target: "src/core"
-          slither-config: "slither.config.json"
+          target: 'src/core'
+          slither-config: 'slither.config.json'
           solc-version: 0.8.17
           sarif: results.sarif
           fail-on: none
