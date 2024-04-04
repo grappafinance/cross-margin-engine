@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 // import test base and helpers.
-import {CrossMarginCashFixture} from "../integrations-cash/CrossMarginCashFixture.t.sol";
+import {CrossMarginCashFixture, Role} from "../integrations-cash/CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
 import "grappa/config/errors.sol";
@@ -64,6 +64,52 @@ contract CrossMarginCashEngineAccessTest is CrossMarginCashFixture {
         vm.expectRevert(CM_AccountIsNotEmpty.selector);
         engine.transferAccount(subAccountIdToModify, address(this));
         vm.stopPrank();
+    }
+
+    function testCanAccessAccountIfOriginIsFundAdmin() public {
+        rolesAuthority.setUserRole(tx.origin, Role.System_FundAdmin, true);
+        _assertCanAccessAccount(alice, true);
+    }
+
+    function testCanAccessAccountIfOriginIsSender() public {
+        rolesAuthority.setUserRole(address(this), Role.System_FundAdmin, true);
+        // add capability for fund admin to run execute
+        rolesAuthority.setRoleCapability(Role.System_FundAdmin, address(engine), engine.execute.selector, true);
+        // remove the other role to make sure that only System_FundAdmin is present
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, false);
+
+        // prank for address(this) is necessary to set tx.origin to address(this)
+        // by default tx.origin is DefaultSender address which is not the same as address(this)
+        vm.startPrank(address(this), address(this));
+        _assertCanAccessAccount(alice, true);
+        vm.stopPrank();
+    }
+
+    function testCannotAccessAccountIfOriginIsSenderNotFA() public {
+        // prank for address(this) is necessary to set tx.origin to address(this)
+        // by default tx.origin is DefaultSender address which is not the same as address(this)
+        vm.startPrank(address(this), address(this));
+        _assertCanAccessAccount(alice, false);
+        vm.stopPrank();
+    }
+
+    function testCannotAccessAccountIfOriginIsNotAdmin() public {
+        assertEq(rolesAuthority.doesUserHaveRole(tx.origin, Role.System_FundAdmin), false);
+        _assertCanAccessAccount(alice, false);
+    }
+
+    function testCannotAccessAccountIfCallerHasNoRole() public {
+        rolesAuthority.setUserRole(tx.origin, Role.System_FundAdmin, true);
+        _assertCanAccessAccount(alice, true);
+
+        // remove role and perform sanity check that it was removed and no other roles are present
+        rolesAuthority.setUserRole(address(this), Role.Investor_MFFeederDomestic, false);
+
+        assertEq(rolesAuthority.doesUserHaveRole(address(this), Role.Investor_MFFeederDomestic), false);
+        assertEq(rolesAuthority.getUserRoles(address(this)), bytes32(0));
+
+        // now caller should not be able to access the account
+        _assertCanAccessAccount(alice, false);
     }
 
     function _assertCanAccessAccount(address subAccountId, bool _canAccess) internal {
