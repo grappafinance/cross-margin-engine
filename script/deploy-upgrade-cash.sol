@@ -11,23 +11,17 @@ contract Deploy is Script {
 
         vm.startBroadcast();
 
-        address grappa = vm.envAddress("GrappaProxy");
-        address optionToken = vm.envAddress("GrappaOptionToken");
-
-        // // deploy and register Cross Margin Engine
-        deployCrossMarginEngine(grappa, optionToken);
-
-        vm.stopBroadcast();
-    }
-
-    function deployCrossMarginEngine(address grappa, address optionToken) public {
-        // ============ Deploy Cross Margin Engine (Upgradable) ============== //
         address engineImplementation = address(
             new CrossMarginCashEngine(
-                address(grappa), optionToken, vm.envAddress("CrossMarginCashOracle"), vm.envAddress("RolesAuthorityProxy")
+                vm.envAddress("GrappaProxy"),
+                vm.envAddress("GrappaOptionToken"),
+                vm.envAddress("CrossMarginCashOracle"),
+                vm.envAddress("RolesAuthorityProxy")
             )
         );
 
         console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);
+
+        vm.stopBroadcast();
     }
 }

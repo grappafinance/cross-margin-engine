@@ -19,30 +19,22 @@ contract Deploy is Script, Utilities {
 
         vm.startBroadcast();
 
-        address grappa = vm.envAddress("GrappaProxy");
-        address optionToken = vm.envAddress("GrappaOptionToken");
+        address engineImplementation = address(
+            new CrossMarginCashEngine(
+                vm.envAddress("GrappaProxy"),
+                vm.envAddress("GrappaOptionToken"),
+                vm.envAddress("CrossMarginCashOracle"),
+                vm.envAddress("RolesAuthorityProxy")
+            )
+        );
 
-        // // deploy and register Cross Margin Engine
-        deployCrossMarginEngine(grappa, optionToken);
+        bytes memory engineData =
+            abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
+        address engine = address(new CrossMarginCashEngineProxy(engineImplementation, engineData));
+
+        console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);
+        console.log("CrossMargin Cash Engine Proxy: \t\t", engine);
 
         vm.stopBroadcast();
     }
-
-    function deployCrossMarginEngine(address grappa, address optionToken) public returns (address crossMarginEngine) {
-        // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(
-            new CrossMarginCashEngine(
-                address(grappa), optionToken, vm.envAddress("CrossMarginCashOracle"), vm.envAddress("RolesAuthorityProxy")
-            )
-        );
-        bytes memory engineData =
-            abi.encodeWithSelector(CrossMarginCashEngine.initialize.selector, vm.envAddress("CrossMarginOwner"));
-        crossMarginEngine = address(new CrossMarginCashEngineProxy(engineImplementation, engineData));
-
-        console.log("CrossMargin Cash Engine: \t\t\t", engineImplementation);
-        console.log("CrossMargin Cash Engine Proxy: \t\t", crossMarginEngine);
-    }
-
-    // add a function prefixed with test here so forge coverage will ignore this file
-    function testChill() public {}
 }

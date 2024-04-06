@@ -5,11 +5,9 @@ import "forge-std/Script.sol";
 
 import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
 
-
 interface IContract {
     function registerEngine(address _engine) external returns (uint8);
 }
-
 
 contract RegisterCollateralizable is Script {
     function run() external {

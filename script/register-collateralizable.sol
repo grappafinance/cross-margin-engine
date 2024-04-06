@@ -5,11 +5,9 @@ import "forge-std/Script.sol";
 
 import "../src/settled-physical/CrossMarginPhysicalEngine.sol";
 
-
 interface IContract {
     function setCollateralizable(address _asset0, address _asset1, bool _value) external;
 }
-
 
 contract RegisterCollateralizable is Script {
     function run() external {

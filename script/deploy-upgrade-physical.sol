@@ -22,6 +22,4 @@ contract DeployPhysicalMarginEngine is Script {
 
         vm.stopBroadcast();
     }
-
-    function deployCrossMarginPhysicalEngine(address pomace, address optionToken) public {}
 }
