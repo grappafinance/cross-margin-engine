@@ -14,8 +14,6 @@ import "../../src/config/types.sol";
 
 import "../mocks/MockERC20.sol";
 
-import "forge-std/Console2.sol";
-
 // solhint-disable-next-line contract-name-camelcase
 contract TestSettleOptionPartialMargin_CMC is CrossMarginCashFixture {
     MockERC20 internal lsEth;
