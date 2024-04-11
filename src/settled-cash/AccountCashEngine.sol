@@ -3,11 +3,12 @@
 pragma solidity ^0.8.0;
 
 // inheriting contracts
-import {BaseEngine} from "grappa/core/engines/BaseEngine.sol";
+import {BaseEngine, IERC20, SafeERC20} from "grappa/core/engines/BaseEngine.sol";
 
 // constants and types
 import "grappa/config/enums.sol";
 import "grappa/config/errors.sol";
+import "../config/errors.sol";
 
 /**
  * @title   AccountCashEngine
@@ -15,9 +16,33 @@ import "grappa/config/errors.sol";
  * @notice  util functions to transfer positions between accounts "without" moving tokens externally
  */
 abstract contract AccountCashEngine is BaseEngine {
-    event CollateralTransferred(address from, address to, uint8 collateralId, uint256 amount);
+    using SafeERC20 for IERC20;
 
+    event CollateralTransferred(address from, address to, uint8 collateralId, uint256 amount);
     event CashOptionTokenTransferred(address from, address to, uint256 tokenId, uint64 amount);
+
+    /**
+     * @dev pull token from user, increase collateral in account storage
+     *         the collateral has to be provided by either caller, or the primary owner of subaccount
+     */
+    function _addCollateral(address _subAccount, bytes calldata _data) internal virtual override {
+        // decode parameters
+        (address from, uint80 amount, uint8 collateralId) = abi.decode(_data, (address, uint80, uint8));
+
+        if (amount == type(uint80).max) revert CM_ExceedsMaxAmount();
+
+        if (from != msg.sender && !_isPrimaryAccountFor(from, _subAccount)) revert BM_InvalidFromAddress();
+
+        // update the account in state
+        _addCollateralToAccount(_subAccount, collateralId, amount);
+
+        (address collateral,) = grappa.assets(collateralId);
+
+        emit CollateralAdded(_subAccount, collateral, amount);
+
+        // this line will revert if collateral id is not registered.
+        IERC20(collateral).safeTransferFrom(from, address(this), amount);
+    }
 
     /**
      * @dev Transfers collateral to another account.

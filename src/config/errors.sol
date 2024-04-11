@@ -32,6 +32,9 @@ error CM_InvalidToken();
 //// @dev invalid signed message
 error CM_InvalidSignature();
 
+//// @dev exceeds max amount
+error CM_ExceedsMaxAmount();
+
 /* -------------------------- *
  *  Cross Margin Math Errors
  * -------------------------- */
