@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
+import {stdError} from "forge-std/Test.sol";
 import {CrossMarginCashFixture} from "./CrossMarginCashFixture.t.sol";
 
 import "grappa/config/types.sol";
@@ -118,6 +119,45 @@ contract TestTransfer_CMC is CrossMarginCashFixture {
         actions[0] = createTransferShortAction(c4000, bob, amount);
 
         vm.expectRevert(NoAccess.selector);
+        engine.execute(address(this), actions);
+    }
+
+    function testCanTransferCollateralUpToMax() public {
+        weth.mint(alice, type(uint80).max - depositAmount);
+
+        // one deposit amount is already in the account from the setup
+        // take away one more from add call to make room for possible transfer
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(wethId, alice, type(uint80).max - depositAmount * 2);
+        engine.execute(alice, actions);
+
+        // add and transfer collateral, tip over the limit by 1
+        actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
+        actions[1] = createTransferCollateralAction(depositAmount, wethId, alice);
+
+        engine.execute(address(this), actions);
+
+        // check the collateral amount in alice's account is the max
+        (,, Balance[] memory aliceCollaterals) = engine.marginAccounts(alice);
+        assertEq(aliceCollaterals[0].amount, type(uint80).max);
+    }
+
+    function testCannotTransferCollateralMoreThanMax() public {
+        weth.mint(alice, type(uint80).max - depositAmount);
+
+        // one deposit amount is already in the account from the setup
+        // take away one more from add call to make room for possible transfer
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(wethId, alice, type(uint80).max - depositAmount * 2);
+        engine.execute(alice, actions);
+
+        // add and transfer collateral, tip over the limit by 1
+        actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
+        actions[1] = createTransferCollateralAction(depositAmount + 1, wethId, alice);
+
+        vm.expectRevert(stdError.arithmeticError);
         engine.execute(address(this), actions);
     }
 }
