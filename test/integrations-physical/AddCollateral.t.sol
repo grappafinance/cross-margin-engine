@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
+import {stdError} from "forge-std/Test.sol";
 import {CrossMarginPhysicalFixture} from "./CrossMarginPhysicalFixture.t.sol";
+import {CM_ExceedsMaxAmount} from "../../src/config/errors.sol";
 
 import "pomace/config/enums.sol";
 import "pomace/config/types.sol";
@@ -120,6 +122,34 @@ contract TestAddCollateral_CMP is CrossMarginPhysicalFixture {
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddCollateralAction(usdcId, address(alice), 100);
         vm.expectRevert(BM_InvalidFromAddress.selector);
+        engine.execute(address(this), actions);
+    }
+
+    function testCannotAddCollateralMoreThanMax() public {
+        // mint a lot of tokens to test the max amount
+        usdc.mint(address(this), type(uint80).max);
+
+        ActionArgs[] memory actions = new ActionArgs[](1);
+        actions[0] = createAddCollateralAction(usdcId, address(this), type(uint80).max);
+        vm.expectRevert(CM_ExceedsMaxAmount.selector);
+        engine.execute(address(this), actions);
+    }
+
+    function testCannotAddCollateralMoreThanMaxSplit() public {
+        // mint a lot of tokens to test the max amount
+        usdc.mint(address(this), type(uint80).max);
+
+        // deposit twice for half the max amount to fill the max precision
+        ActionArgs[] memory actions = new ActionArgs[](2);
+        actions[0] = createAddCollateralAction(usdcId, address(this), type(uint80).max / 2);
+        actions[1] = createAddCollateralAction(usdcId, address(this), type(uint80).max / 2);
+
+        engine.execute(address(this), actions);
+
+        actions = new ActionArgs[](1);
+        // tip over to overflow on the third deposit, separate execution to catch revert
+        actions[0] = createAddCollateralAction(usdcId, address(this), 10);
+        vm.expectRevert(stdError.arithmeticError);
         engine.execute(address(this), actions);
     }
 }
